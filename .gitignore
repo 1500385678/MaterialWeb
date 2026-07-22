@@ -1,0 +1,93 @@
+# ============================================================
+# MaterialWeb · v1.0 · .gitignore
+# 仓库只提交"代码 + 文档 + 表结构",运行时数据/缓存/日志不入库
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+.ENV
+
+# --- Node (备查,本项目未用) ---
+node_modules/
+.npm
+.pnpm-store/
+
+# --- IDE / 编辑器 ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- 运行时数据(SQLite) ---
+# 库结构在 db/init_schema.sql,首次运行用 scripts/init_db.py 重建
+db/materials.db
+db/materials.db-journal
+db/materials.db-wal
+db/materials.db-shm
+# 根目录的旧版 materials.db(单体期遗留)
+materials.db
+materials.db-journal
+materials.db-wal
+materials.db-shm
+
+# --- _MaterialDb/ 旧工具目录(保留 .py 工具,屏蔽 Excel 模板/导出) ---
+_MaterialDb/*.xlsx
+
+# --- 用户上传/生成的媒体 ---
+# README 标 ★★ "可重建",运行时会自动生成
+data/uploads/
+data/qr_codes/
+data/media/images/
+data/media/cad/
+uploads/
+qr_codes/
+media/
+
+# --- 服务日志 ---
+*.out
+*.err
+*.log
+logs/
+server.out
+server.err
+daemon.out
+daemon.err
+api_server.out
+api_server.err
+
+# --- 个人工作日志(本地流水,不进仓库) ---
+.Log/
+*.local.md
+notes/
+todo/
+
+# --- 临时/缓存 ---
+tmp/
+temp/
+.cache/
+*.tmp
+*.bak
+
+# --- 环境变量 / 密钥(防 Secret scanning) ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
