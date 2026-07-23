@@ -13,9 +13,6 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
-# 0. 同步 tags (本地可能没新 release tag)
-git fetch --tags --quiet 2>$null
-
 # 1. 取 token + 注入 process (gh 识别 GH_TOKEN 环境变量)
 $token = [Environment]::GetEnvironmentVariable('GH_TOKEN', 'User')
 if (-not $token) { Write-Error "[release] GH_TOKEN not set in User-scope. Run: [Environment]::SetEnvironmentVariable('GH_TOKEN','ghp_xxx','User')"; exit 1 }
@@ -26,7 +23,7 @@ $remote = git remote get-url origin
 if ($remote -notmatch 'github\.com[:/](.+?)/(.+?)\.git$') { Write-Error "[release] origin not a GitHub repo: $remote"; exit 1 }
 $owner = $matches[1]; $repo = $matches[2]
 
-# 3. 读最新 release tag
+# 3. 读最新 release tag (从 GitHub API 拿,不走 git fetch)
 $latest = gh release list --repo "$owner/$repo" --limit 1 --json tagName -q '.[0].tagName' 2>$null
 if (-not $latest) { $next = 'v0.0.1'; $prev = $null }
 else {
@@ -45,10 +42,17 @@ else {
     $prev = $latest
 }
 
-# 4. 收集 release notes (上次 release 之后的 commit)
-$range = if ($prev) { "$prev..HEAD" } else { 'HEAD' }
-$log = git log --pretty=format:"- %s (%h)" $range 2>$null
-if (-not $log) { $log = "- 初始 release $next" }
+# 4. 收集 release notes (上次 release 之后的 commit,本地 + GitHub commits API)
+$logLines = @()
+$base = if ($prev) { $prev } else { $null }
+try {
+    $headSha = git rev-parse HEAD
+    $range = if ($base) { "$base..$headSha" } else { $headSha }
+    $localLog = git log --pretty=format:"- %s (%h)" $range 2>$null
+    if ($localLog) { $logLines += $localLog }
+} catch {}
+if (-not $logLines) { $logLines = @("- 初始 release $next") }
+$log = $logLines -join "`n"
 $today = Get-Date -Format 'yyyy-MM-dd HH:mm'
 $notes = @"
 ## MaterialWeb $next
