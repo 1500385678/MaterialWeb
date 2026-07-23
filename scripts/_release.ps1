@@ -58,7 +58,7 @@ $log
 
 ### 同步
 - Architect / Engineer / Manager-loc / 01_Owner 请同步本地代码 + 查看 release notes
-- 安装: \`git pull origin main\`
+- 安装: `git pull origin main`
 "@
 
 # 5. 创建 release (用临时文件传 notes 避免转义问题)
