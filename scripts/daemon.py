@@ -12,7 +12,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.resolve()  # MaterialWeb-v1.0 根
-PORT = 8092
+PORT = 8093
 HOST = '127.0.0.1'
 
 

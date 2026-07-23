@@ -16,7 +16,7 @@ STATIC_DIR  = ROOT / 'client'        # 前端静态资源
 
 # 服务
 HOST        = '0.0.0.0'
-PORT        = 8092                   # 顺延 CanvasWeb 8085 / 8086~8091 被 SketchUp 占,临时 8092
+PORT        = 8093                   # 顺延 CanvasWeb 8085 / 8086~8091 被 SketchUp 占 / 8092 被兄弟项目占,临时 8093
 DEBUG       = True                   # dev 模式,生产改 False
 
 # 限制
