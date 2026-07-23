@@ -13,6 +13,9 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
+# 0. 同步 tags (本地可能没新 release tag)
+git fetch --tags --quiet 2>$null
+
 # 1. 取 token + 注入 process (gh 识别 GH_TOKEN 环境变量)
 $token = [Environment]::GetEnvironmentVariable('GH_TOKEN', 'User')
 if (-not $token) { Write-Error "[release] GH_TOKEN not set in User-scope. Run: [Environment]::SetEnvironmentVariable('GH_TOKEN','ghp_xxx','User')"; exit 1 }
