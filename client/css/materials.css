@@ -1,0 +1,295 @@
+/* materials.css · 材料页 (sidebar + hero + entry + grid)
+参考 D5 Works 风格,保留 MaterialWeb 暗色 + 橙色主题
+- .mat-layout  = 240px sidebar + 1fr main  (grid)
+- .mat-sidebar = sticky 分类/防火/造价
+- .mat-hero    = 米黄渐变 + 装饰几何
+- .mat-entries = 3 入口卡 (A1 / 高端 / 新品)
+- .mat-grid    = 4:3 大图网格
+*/
+
+/* ============ Layout ============ */
+.mat-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ============ Sidebar ============ */
+.mat-sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.mat-sidebar::-webkit-scrollbar { width: 4px; }
+.mat-sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.mat-sidebar-search { margin-bottom: 16px; }
+.mat-sidebar-search input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+.mat-sidebar-search input:focus { border-color: var(--primary); }
+
+.mat-sidebar-section { margin-bottom: 18px; }
+.mat-sidebar-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  padding-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.mat-sidebar-title .icon { font-size: 13px; }
+
+.mat-sidebar-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+}
+
+.mat-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  border-left: 2px solid transparent;
+  user-select: none;
+}
+.mat-sidebar-item:hover { background: rgba(255, 158, 74, 0.08); color: var(--primary); }
+.mat-sidebar-item.active {
+  background: rgba(255, 158, 74, 0.12);
+  color: var(--primary);
+  border-left-color: var(--primary);
+}
+.mat-sidebar-item .icon { font-size: 12px; opacity: 0.7; }
+.mat-sidebar-item .count {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: #2a2a2a;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+.mat-sidebar-item.active .count { background: var(--primary); color: #fff; }
+
+.mat-sidebar-children {
+  display: none;
+  list-style: none;
+  margin: 2px 0 4px 14px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  flex-direction: column;
+  gap: 1px;
+}
+.mat-sidebar-item.expanded + .mat-sidebar-children { display: flex; }
+.mat-sidebar-children .mat-sidebar-item { padding: 4px 10px; font-size: 12px; }
+
+.mat-sidebar-reset {
+  margin-top: 8px;
+  width: 100%;
+  padding: 7px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: .15s;
+}
+.mat-sidebar-reset:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ============ Hero ============ */
+.mat-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, #f5d4a4 0%, #e9b67a 60%, #d99a5b 100%);
+  color: #2a1a0a;
+  padding: 32px 36px;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 16px rgba(217, 154, 91, 0.15);
+}
+.mat-hero-content { z-index: 2; max-width: 65%; }
+.mat-hero h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.02em; }
+.mat-hero p { font-size: 14px; opacity: 0.85; line-height: 1.5; }
+.mat-hero-shape {
+  position: absolute;
+  right: -40px;
+  bottom: -40px;
+  width: 220px;
+  height: 220px;
+  background: rgba(255, 255, 255, 0.22);
+  transform: rotate(45deg);
+  border-radius: 14px;
+  z-index: 1;
+}
+.mat-hero-shape::after {
+  content: '';
+  position: absolute;
+  top: 36px;
+  left: 36px;
+  width: 110px;
+  height: 110px;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+}
+.mat-hero-shape::before {
+  content: '';
+  position: absolute;
+  top: 78px;
+  left: 78px;
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+}
+
+/* ============ Entry Cards ============ */
+.mat-entries {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.mat-entry {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: .2s;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.mat-entry::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--entry-color, var(--primary));
+  opacity: 0;
+  transition: opacity .2s;
+  pointer-events: none;
+}
+.mat-entry:hover { border-color: var(--entry-color, var(--primary)); transform: translateY(-2px); }
+.mat-entry:hover::before { opacity: 0.06; }
+.mat-entry-icon {
+  font-size: 28px;
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 158, 74, 0.12);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.mat-entry-info { z-index: 1; min-width: 0; }
+.mat-entry-info h3 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+.mat-entry-info p { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mat-entry[data-key="fire"]  { --entry-color: #ef4444; }
+.mat-entry[data-key="high"]  { --entry-color: #f59e0b; }
+.mat-entry[data-key="new"]   { --entry-color: #10b981; }
+.mat-entry[data-key="fire"] .mat-entry-icon  { background: rgba(239, 68, 68, 0.12); }
+.mat-entry[data-key="high"] .mat-entry-icon  { background: rgba(245, 158, 11, 0.12); }
+.mat-entry[data-key="new"]  .mat-entry-icon  { background: rgba(16, 185, 129, 0.12); }
+
+/* ============ Grid (大图卡片) ============ */
+.mat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.mat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: .2s;
+  display: flex;
+  flex-direction: column;
+}
+.mat-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255, 158, 74, 0.12); }
+.mat-card-img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.mat-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.mat-card-img .ph {
+  font-size: 36px;
+  opacity: 0.4;
+  color: var(--text-muted);
+}
+.mat-card-tag {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.mat-card-body { padding: 10px 12px 12px; flex: 1; display: flex; flex-direction: column; }
+.mat-card-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; line-height: 1.3; }
+.mat-card-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.mat-card-price { font-size: 13px; color: var(--primary); font-weight: 600; }
+.mat-card-badges { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.mat-badge { font-size: 10px; padding: 1px 6px; border-radius: 10px; background: #2a2a2a; color: var(--text-muted); }
+.mat-badge.fire-A1 { background: #1a3d2e; color: #86efac; }
+.mat-badge.fire-B1 { background: #3d3a1a; color: #fde68a; }
+.mat-badge.fire-B2 { background: #3d1a1a; color: #fca5a5; }
+
+/* ============ Responsive ============ */
+@media (max-width: 900px) {
+  .mat-layout { grid-template-columns: 1fr; padding: 16px; }
+  .mat-sidebar { position: static; max-height: none; }
+  .mat-sidebar-section { margin-bottom: 12px; }
+  .mat-hero { padding: 22px; min-height: 110px; }
+  .mat-hero h1 { font-size: 20px; }
+  .mat-hero-content { max-width: 80%; }
+  .mat-hero-shape { width: 140px; height: 140px; right: -30px; bottom: -30px; }
+  .mat-hero-shape::after { width: 70px; height: 70px; top: 22px; left: 22px; }
+  .mat-entries { grid-template-columns: 1fr; }
+  .mat-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+}

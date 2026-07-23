@@ -1,12 +1,30 @@
 """材料 CRUD + 搜索 · /api/materials
-- GET /api/materials          列表(支持 category / fire_rating / cost_tier / keyword)
+- GET /api/materials          列表(支持 category / fire_rating / cost_tier / keyword / order_by)
 - GET /api/materials/<id>     详情(含 suppliers)
 - GET /api/materials/search?q 关键词搜索(limit 50)
 """
+import json
 from flask import Blueprint, request, jsonify
 from ..core import get_db, rows_to_list, row_to_dict
 
 bp = Blueprint('materials', __name__)
+
+# 允许的排序键 (防 SQL 注入)
+ORDER_BY_MAP = {
+    'name_cn':        'm.name_cn',
+    'created_at_desc': 'm.created_at DESC',
+    'created_at':     'm.created_at',
+}
+
+
+def _enrich(row: dict) -> dict:
+    """把 image_urls JSON 解析成 list,方便前端直接用"""
+    if row.get('image_urls'):
+        try: row['images'] = json.loads(row['image_urls']) or []
+        except Exception: row['images'] = []
+    else:
+        row['images'] = []
+    return row
 
 
 @bp.get('/api/materials')
@@ -33,9 +51,13 @@ def list_materials():
         sql += ' AND (m.name_cn LIKE ? OR m.name_en LIKE ? OR m.sub_category LIKE ?)'
         kw = f"%{q['keyword']}%"
         params.extend([kw, kw, kw])
-    sql += ' ORDER BY m.name_cn'
+    order_key = q.get('order_by', 'name_cn')
+    sql += ' ORDER BY ' + ORDER_BY_MAP.get(order_key, 'm.name_cn')
+    if q.get('limit'):
+        try: sql += ' LIMIT ' + str(int(q['limit']))
+        except Exception: pass
     rows = db.execute(sql, params).fetchall()
-    return jsonify(rows_to_list(rows))
+    return jsonify([_enrich(r) for r in rows_to_list(rows)])
 
 
 @bp.get('/api/materials/search')
@@ -71,6 +93,7 @@ def detail(material_id: int):
         return jsonify({'error': '材料不存在'}), 404
 
     d = row_to_dict(row)
+    _enrich(d)
     if d.get('suppliers_json'):
         ids = d['suppliers_json'] if isinstance(d['suppliers_json'], list) else []
         if ids:

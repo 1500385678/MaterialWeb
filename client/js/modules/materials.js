@@ -1,4 +1,5 @@
-// modules/materials.js · 材料库 · 列表 + 卡片 + 详情弹窗
+// modules/materials.js · 材料库 · 列表 + 大图卡片 + 详情弹窗 + 入口卡
+// 参考 D5 Works:4:3 大图 + 类型 tag + 名称 + 价格
 import { $, el } from '../core/dom.js';
 import { state } from '../core/state.js';
 import { bus } from '../core/events.js';
@@ -10,6 +11,13 @@ import { media } from './media.js';
 import { utils } from './utils.js';
 
 const CACHE = new Map(); // id -> 详情
+
+// code 前缀 → 占位 emoji(无图时)
+const CATEGORY_ICON = {
+  metal: '🔩', concrete: '🧱', masonry: '🧱', wood: '🪵', glass: '🪟',
+  stone: '🪨', membrane: '⛺', insulation: '🛡', finishing: '🎨', composite: '🧬',
+  flex: '🧊', grg: '🎭', grc: '🏛', uhpc: '💎', gfrc: '🏛',
+};
 
 export const materials = {
   async init() {
@@ -27,7 +35,7 @@ export const materials = {
     const grid = $('#materialsGrid');
     if (!grid) return;
     if (!list.length) {
-      grid.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>没有匹配的材料。</p></div>';
+      grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div class="empty-icon">📭</div><p>没有匹配的材料。试试重置筛选或换个关键词。</p></div>';
       return;
     }
     grid.innerHTML = '';
@@ -35,31 +43,66 @@ export const materials = {
   },
 
   makeCard(m) {
-    const card = el('div', { class: 'material-card' });
-    card.appendChild(el('div', { class: 'card-bg' }));
-    card.appendChild(el('div', { class: 'card-mask' }));
-    const header = el('div', { class: 'card-header' }, [
-      el('div', { class: 'card-title' }, m.name_cn || m.code),
-      el('div', { class: 'card-code' }, m.code),
-    ]);
-    card.appendChild(header);
-    if (m.category_name) card.appendChild(el('div', { class: 'card-category' }, m.category_name));
-    const tags = el('div', { class: 'card-tags' });
-    if (m.fire_rating) tags.appendChild(el('span', { class: 'tag tag-fire-' + m.fire_rating }, m.fire_rating));
-    if (m.cost_tier)   tags.appendChild(el('span', { class: 'tag tag-cost-' + (m.cost_tier === '低' ? 'low' : m.cost_tier === '高' ? 'high' : 'mid') }, m.cost_tier));
-    card.appendChild(tags);
-    const stats = el('div', { class: 'card-stats' });
-    stats.appendChild(el('div', { class: 'stat-item' }, [
-      el('div', { class: 'stat-label' }, '单价'),
-      el('div', {}, `¥${m.unit_price || 0}/${m.unit || 'm²'}`),
-    ]));
-    stats.appendChild(el('div', { class: 'stat-item' }, [
-      el('div', { class: 'stat-label' }, '损耗'),
-      el('div', {}, `${m.loss_factor || 1.0}`),
-    ]));
-    card.appendChild(stats);
+    const card = el('div', { class: 'mat-card' });
+    const imgBox = el('div', { class: 'mat-card-img' });
+
+    // 取首图(后端解析好的 images 数组)
+    const firstImg = (m.images && m.images[0]) || null;
+    if (firstImg) {
+      const img = el('img', { src: media.imageUrl(firstImg), loading: 'lazy', alt: m.name_cn || m.code });
+      img.onerror = () => { img.style.display = 'none'; };
+      imgBox.appendChild(img);
+    } else {
+      // 占位:code 前缀映射 emoji
+      const prefix = (m.code || '').split('_')[0]?.toLowerCase();
+      imgBox.appendChild(el('div', { class: 'ph' }, CATEGORY_ICON[prefix] || '🧱'));
+    }
+    // 类型 tag: code 前缀 (STONE_001 → STONE)
+    const tag = (m.code || '').split('_')[0] || 'MAT';
+    imgBox.appendChild(el('div', { class: 'mat-card-tag' }, tag));
+    card.appendChild(imgBox);
+
+    const body = el('div', { class: 'mat-card-body' });
+    body.appendChild(el('div', { class: 'mat-card-name' }, m.name_cn || m.code));
+    body.appendChild(el('div', { class: 'mat-card-sub' }, m.sub_category || m.category_name || ''));
+    body.appendChild(el('div', { class: 'mat-card-price' }, `¥${m.unit_price || 0} / ${m.unit || 'm²'}`));
+    const badges = el('div', { class: 'mat-card-badges' });
+    if (m.fire_rating) badges.appendChild(el('span', { class: 'mat-badge fire-' + m.fire_rating }, m.fire_rating));
+    if (m.cost_tier)   badges.appendChild(el('span', { class: 'mat-badge' }, m.cost_tier + '端'));
+    body.appendChild(badges);
+    card.appendChild(body);
+
     card.addEventListener('click', () => this.openDetail(m.id));
     return card;
+  },
+
+  // 入口卡跳转:激活对应 sidebar 筛选 + 搜索 + 滚到网格
+  async jumpEntry(key) {
+    const map = {
+      fire: { sel: '#matSidebarFire',  attr: 'fire',  val: 'A1' },
+      high: { sel: '#matSidebarCost',  attr: 'cost',  val: '高' },
+    };
+    if (key === 'new') {
+      // 本月新增:临时改用 order_by=created_at_desc,清掉其他筛选
+      filters.reset();
+      const list = await api.list({ order_by: 'created_at_desc', limit: 30 });
+      state.materials = list;
+      this.renderGrid(list);
+      document.getElementById('materialsGrid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      toast(`已加载最近 ${list.length} 条新材料`, 'success');
+      return;
+    }
+    const cfg = map[key];
+    if (!cfg) return;
+    const target = document.querySelector(`${cfg.sel} [data-${cfg.attr}="${cfg.val}"]`);
+    if (!target) return;
+    // 分类/造价都清掉,只激活目标
+    ['#matSidebarCategories', cfg.sel].forEach(sel => {
+      document.querySelectorAll(`${sel} .mat-sidebar-item`).forEach(s => s.classList.remove('active'));
+    });
+    target.classList.add('active');
+    await this.search();
+    document.getElementById('materialsGrid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
   async openDetail(id) {
@@ -73,7 +116,6 @@ export const materials = {
     if (basic) basic.innerHTML = this.renderBasic(d);
     const sn = $('#structureNotes');
     if (sn) sn.textContent = d.structure_notes || '暂无';
-    // 供应商 / 考试 / 图片 / CAD 由对应 module 接管
     bus.emit('material:opened', d);
     utils.openModal('materialModal');
   },

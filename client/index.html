@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>建筑材料数据库 · MaterialWeb v1.0</title>
 <link rel="stylesheet" href="/css/common.css">
+<link rel="stylesheet" href="/css/materials.css">
 </head>
 <body>
 
@@ -63,28 +64,82 @@
 </div>
 
 <!-- ====== 材料库页 ====== -->
-<div id="page-materials" class="container page active">
-  <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="按名称、英文、子类搜索">
-    <select class="filter" id="filterCategory">
-      <option value="">全部分类</option>
-    </select>
-    <select class="filter" id="filterFire">
-      <option value="">全部燃烧等级</option>
-      <option value="A1">A1 不燃</option>
-      <option value="B1">B1 难燃</option>
-      <option value="B2">B2 可燃</option>
-    </select>
-    <select class="filter" id="filterCost">
-      <option value="">全部造价</option>
-      <option value="低">💰 低端</option>
-      <option value="中">💰💰 中端</option>
-      <option value="高">💰💰💰 高端</option>
-    </select>
-    <button class="btn btn-outline" onclick="filters.reset()">重置</button>
-  </div>
-  <div id="materialsGrid" class="materials-grid">
-    <div class="empty"><div class="empty-icon">📦</div><p>加载中...</p></div>
+<div id="page-materials" class="page active">
+  <div class="mat-layout">
+
+    <!-- 左侧 sidebar：搜索 + 分类/防火/造价 -->
+    <aside class="mat-sidebar">
+      <div class="mat-sidebar-search">
+        <input type="text" id="searchInput" placeholder="🔍 名称 / 英文 / 子类">
+      </div>
+
+      <div class="mat-sidebar-section">
+        <div class="mat-sidebar-title"><span class="icon">📁</span> 全部分类</div>
+        <ul class="mat-sidebar-list" id="matSidebarCategories">
+          <li class="mat-sidebar-item" data-cat=""><span class="icon">🏷</span>全部<span class="count">-</span></li>
+        </ul>
+      </div>
+
+      <div class="mat-sidebar-section">
+        <div class="mat-sidebar-title"><span class="icon">🔥</span> 防火等级</div>
+        <ul class="mat-sidebar-list" id="matSidebarFire">
+          <li class="mat-sidebar-item" data-fire="A1"><span class="icon">🛡</span>A1 不燃<span class="count">-</span></li>
+          <li class="mat-sidebar-item" data-fire="B1"><span class="icon">⚠</span>B1 难燃<span class="count">-</span></li>
+          <li class="mat-sidebar-item" data-fire="B2"><span class="icon">⚡</span>B2 可燃<span class="count">-</span></li>
+        </ul>
+      </div>
+
+      <div class="mat-sidebar-section">
+        <div class="mat-sidebar-title"><span class="icon">💰</span> 造价档</div>
+        <ul class="mat-sidebar-list" id="matSidebarCost">
+          <li class="mat-sidebar-item" data-cost="低"><span class="icon">💚</span>低端<span class="count">-</span></li>
+          <li class="mat-sidebar-item" data-cost="中"><span class="icon">💛</span>中端<span class="count">-</span></li>
+          <li class="mat-sidebar-item" data-cost="高"><span class="icon">💗</span>高端<span class="count">-</span></li>
+        </ul>
+      </div>
+
+      <button class="mat-sidebar-reset" onclick="filters.reset()">↻ 重置筛选</button>
+    </aside>
+
+    <!-- 主内容：Hero + 3 入口 + 网格 -->
+    <main class="mat-main">
+      <div class="mat-hero">
+        <div class="mat-hero-content">
+          <h1>建筑材料数据库</h1>
+          <p>外立面 · 幕墙 · 室内 · 屋面 · 景观 · AI 选材 + QR 溯源 + PDF 导出</p>
+        </div>
+        <div class="mat-hero-shape"></div>
+      </div>
+
+      <div class="mat-entries">
+        <div class="mat-entry" data-key="fire" onclick="materials.jumpEntry('fire')">
+          <div class="mat-entry-icon">🛡</div>
+          <div class="mat-entry-info">
+            <h3>A1 不燃材料</h3>
+            <p>防火等级最高的幕墙 / 外墙 / 屋面</p>
+          </div>
+        </div>
+        <div class="mat-entry" data-key="high" onclick="materials.jumpEntry('high')">
+          <div class="mat-entry-icon">💎</div>
+          <div class="mat-entry-info">
+            <h3>高端材料</h3>
+            <p>UHPC · 铜 · 钛 · 进口天然石材</p>
+          </div>
+        </div>
+        <div class="mat-entry" data-key="new" onclick="materials.jumpEntry('new')">
+          <div class="mat-entry-icon">🆕</div>
+          <div class="mat-entry-info">
+            <h3>本月新增</h3>
+            <p>最近入库的新材料</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="materialsGrid" class="mat-grid">
+        <div class="empty"><div class="empty-icon">📦</div><p>加载中...</p></div>
+      </div>
+    </main>
+
   </div>
 </div>
 
