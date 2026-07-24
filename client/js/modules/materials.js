@@ -60,6 +60,10 @@ export const materials = {
     // 类型 tag: code 前缀 (STONE_001 → STONE)
     const tag = (m.code || '').split('_')[0] || 'MAT';
     imgBox.appendChild(el('div', { class: 'mat-card-tag' }, tag));
+    // 语言 tag (取前 2 个,作为卡片上的小 chip)
+    if (Array.isArray(m.material_language) && m.material_language.length) {
+      imgBox.appendChild(el('div', { class: 'mat-card-lang' }, m.material_language.slice(0, 2).join(' · ')));
+    }
     card.appendChild(imgBox);
 
     const body = el('div', { class: 'mat-card-body' });
@@ -114,10 +118,60 @@ export const materials = {
     $('#modalTitle').textContent = d.name_cn || d.code;
     const basic = $('#basicInfo');
     if (basic) basic.innerHTML = this.renderBasic(d);
+    this.renderLanguage(d);
+    await this.renderReferences(id);
     const sn = $('#structureNotes');
     if (sn) sn.textContent = d.structure_notes || '暂无';
     bus.emit('material:opened', d);
     utils.openModal('materialModal');
+  },
+
+  // 渲染"语言" tab 内容
+  renderLanguage(d) {
+    const panel = $('#languagePanel');
+    if (!panel) return;
+    const langs = Array.isArray(d.material_language) ? d.material_language : [];
+    if (!langs.length && !d.language_notes) {
+      panel.innerHTML = '<div class="empty"><p>暂无空间语言标签</p></div>';
+      return;
+    }
+    let html = '';
+    if (langs.length) {
+      html += '<div class="lang-tags">' + langs.map(t =>
+        `<span class="lang-tag">${t}</span>`
+      ).join('') + '</div>';
+    }
+    if (d.language_notes) {
+      html += `<p class="lang-notes">${d.language_notes}</p>`;
+    }
+    panel.innerHTML = html;
+  },
+
+  // 渲染"参考" tab 内容(异步拉 references)
+  async renderReferences(materialId) {
+    const panel = $('#referencesPanel');
+    if (!panel) return;
+    panel.innerHTML = '<div class="empty"><p>加载中…</p></div>';
+    try {
+      const r = await fetch(`/api/materials/${materialId}/references`).then(r => r.json());
+      if (!r.length) {
+        panel.innerHTML = '<div class="empty"><p>暂无真实工程参考(可后续补充)</p></div>';
+        return;
+      }
+      panel.innerHTML = r.map(ref => `
+        <div class="ref-card">
+          <div class="ref-head">
+            <div class="ref-name">${ref.project_name}</div>
+            <div class="ref-year">${ref.year || '?'}</div>
+          </div>
+          <div class="ref-meta">${[ref.designer, ref.city, ref.part].filter(Boolean).join(' · ')}</div>
+          ${ref.comment ? `<div class="ref-comment">"${ref.comment}"</div>` : ''}
+          ${ref.image_url ? `<div class="ref-img"><img src="${ref.image_url}" alt="${ref.project_name}" loading="lazy"></div>` : '<div class="ref-img ref-img-empty">配图待补</div>'}
+        </div>
+      `).join('');
+    } catch (e) {
+      panel.innerHTML = '<div class="empty"><p>加载失败</p></div>';
+    }
   },
 
   renderBasic(d) {

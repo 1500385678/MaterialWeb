@@ -105,4 +105,42 @@ def detail(material_id: int):
     return jsonify(d)
 
 
+@bp.get('/api/materials/<int:material_id>/references')
+def material_references(material_id: int):
+    """材料真实工程参考"""
+    db = get_db()
+    rows = db.execute('''
+        SELECT id, material_id, project_name, designer, city, year, part,
+               image_url, image_source, comment, sort_order
+        FROM material_references
+        WHERE material_id = ?
+        ORDER BY sort_order, id
+    ''', [material_id]).fetchall()
+    return jsonify(rows_to_list(rows))
+
+
+@bp.get('/api/materials/languages/all')
+def all_languages():
+    """所有用过的 language 词云(去重 + 频次)"""
+    db = get_db()
+    rows = db.execute('''
+        SELECT material_language FROM materials
+        WHERE status = 'active' AND material_language IS NOT NULL
+          AND material_language != '[]'
+    ''').fetchall()
+    from collections import Counter
+    cnt = Counter()
+    for r in rows:
+        langs = r['material_language']
+        if isinstance(langs, str):
+            try:
+                langs = json.loads(langs)
+            except Exception:
+                continue
+        if isinstance(langs, list):
+            for t in langs:
+                cnt[t] += 1
+    return jsonify([{'tag': t, 'count': c} for t, c in cnt.most_common()])
+
+
 def register(app): app.register_blueprint(bp)

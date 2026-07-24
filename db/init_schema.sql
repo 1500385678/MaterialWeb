@@ -123,6 +123,10 @@ CREATE TABLE IF NOT EXISTS materials (
     qr_code_path    TEXT    DEFAULT NULL,         -- 二维码图片路径
     qr_content      TEXT    DEFAULT NULL,         -- 二维码内容
 
+    -- 空间表达语言(由 init_db.py 增量加列,不写在此避免已存在 DB 报错)
+    -- material_language TEXT  DEFAULT '[]'      -- 空间语言 tags JSON 数组
+    -- language_notes    TEXT  DEFAULT NULL      -- 1 句话解释为何用这些语言
+
     -- 状态与备注
     status          TEXT    DEFAULT 'active',     -- 'active' / 'deprecated'
     source_doc      TEXT    DEFAULT NULL,         -- 来源文档路径
@@ -186,6 +190,25 @@ CREATE TABLE IF NOT EXISTS scheme_materials (
     is_selected     INTEGER DEFAULT 0             -- 0=备选 1=选用
 );
 
+-- ----------------------------------------------------------
+-- 8. 真实工程参考表
+-- 每种材料挂 3-5 条真实建成项目,辅助建筑师"看别人怎么用"
+-- ----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS material_references (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    material_id     INTEGER NOT NULL REFERENCES materials(id),
+    project_name    TEXT    NOT NULL,             -- '鹿野苑石刻博物馆'
+    designer        TEXT    DEFAULT NULL,         -- '刘家琨'
+    city            TEXT    DEFAULT NULL,         -- '成都'
+    year            INTEGER DEFAULT NULL,         -- 2002
+    part            TEXT    DEFAULT NULL,         -- '外墙/屋面/幕墙'
+    image_url       TEXT    DEFAULT NULL,         -- 配图 (data/media/references/<id>.jpg)
+    image_source    TEXT    DEFAULT NULL,         -- '项目档案/官方图/版权:XX'
+    comment         TEXT    DEFAULT NULL,         -- 一句话点评
+    sort_order      INTEGER DEFAULT 0,
+    created_at      TEXT    DEFAULT (datetime('now', 'localtime'))
+);
+
 -- ============================================================
 -- 索引
 -- ============================================================
@@ -197,6 +220,7 @@ CREATE INDEX IF NOT EXISTS idx_pm_project         ON project_materials(project_i
 CREATE INDEX IF NOT EXISTS idx_pm_material         ON project_materials(material_id);
 CREATE INDEX IF NOT EXISTS idx_ek_category         ON exam_knowledge(category_id);
 CREATE INDEX IF NOT EXISTS idx_sm_scheme           ON scheme_materials(scheme_id);
+CREATE INDEX IF NOT EXISTS idx_ref_material       ON material_references(material_id);
 
 -- ============================================================
 -- 初始数据：分类
