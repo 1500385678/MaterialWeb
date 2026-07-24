@@ -42,15 +42,28 @@ else {
     $prev = $latest
 }
 
-# 4. 收集 release notes (上次 release 之后的 commit,本地 + GitHub commits API)
+# 4. 收集 release notes (上次 release 之后的 commit,从 GitHub API 拿,避免本地 tag 缺失)
 $logLines = @()
 $base = if ($prev) { $prev } else { $null }
-try {
-    $headSha = git rev-parse HEAD
-    $range = if ($base) { "$base..$headSha" } else { $headSha }
-    $localLog = git log --pretty=format:"- %s (%h)" $range 2>$null
-    if ($localLog) { $logLines += $localLog }
-} catch {}
+if ($base) {
+    try {
+        $compareOut = gh api "repos/$owner/$repo/compare/$base...main" --jq '.commits[].commit.message' 2>$null
+        if ($compareOut) {
+            foreach ($line in ($compareOut -split "`n")) {
+                $first = ($line -split "`n")[0].Trim()
+                if ($first.Length -gt 0) { $logLines += "- $first" }
+            }
+        }
+    } catch {}
+}
+# fallback: 用本地 git log (可能因 tag 缺失而只返 HEAD)
+if (-not $logLines) {
+    try {
+        $headSha = git rev-parse HEAD
+        $localLog = git log --pretty=format:"- %s" -n 5 $headSha 2>$null
+        if ($localLog) { $logLines = @($localLog) }
+    } catch {}
+}
 if (-not $logLines) { $logLines = @("- 初始 release $next") }
 $log = $logLines -join "`n"
 $today = Get-Date -Format 'yyyy-MM-dd HH:mm'
