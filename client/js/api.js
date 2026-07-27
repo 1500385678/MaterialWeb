@@ -40,6 +40,13 @@ export const materials = {
 // ---- categories / suppliers / exam ----
 export const categories = () => req('/categories');
 export const suppliers  = () => req('/suppliers');
+
+// ---- prices(跨库:价格库 MaterialWebPrices 的查询) ----
+export const prices = {
+  byMaterial: (id) => req('/material_price/' + id),
+  search:     (q)  => req('/prices?q=' + encodeURIComponent(q)),
+  stats:      ()   => req('/prices/stats'),
+};
 export const exam       = {
   all:          () => req('/exam'),
   byChapter:    (c) => req('/exam/chapter/' + encodeURIComponent(c)),
