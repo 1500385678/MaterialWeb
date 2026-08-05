@@ -55,10 +55,21 @@ def create_app() -> Flask:
 
 
 def get_db():
-    """每个请求一个连接,g.db 缓存"""
+    """每个请求一个连接,g.db 缓存
+
+    首次连接启用 WAL + 5s busy_timeout,满足 § 6.7「20 并发」铁律
+    (默认 rollback journal 模式下,读阻塞读 → 20 并发必崩)
+    """
     if 'db' not in g:
-        g.db = sqlite3.connect(str(config.DB_PATH))
+        g.db = sqlite3.connect(
+            str(config.DB_PATH),
+            timeout=10,        # 连接池锁等待 10s
+        )
         g.db.row_factory = sqlite3.Row
+        # WAL + NORMAL 让读不阻塞写,满足 20 并发不卡
+        g.db.execute('PRAGMA journal_mode=WAL')
+        g.db.execute('PRAGMA synchronous=NORMAL')
+        g.db.execute('PRAGMA busy_timeout=5000')
     return g.db
 
 

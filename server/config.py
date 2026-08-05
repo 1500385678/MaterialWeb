@@ -9,9 +9,10 @@ ROOT = Path(__file__).parent.parent.resolve()
 # 数据/资源目录
 DB_PATH     = ROOT / 'db' / 'materials.db'
 
-# 价格库(独立 db,跨库引用)· D:\Mac\Mac\Mac\workteam\05_space\03_architect\Defense\06-Material\Attack\价格库\prices.db
-# 注:本仓库是 MaterialWeb,价格库是兄弟项目(MaterialWebPrices)
-PRICES_DB_PATH = Path(r'D:\Mac\Mac\Mac\workteam\05_space\03_architect\Defense\06-Material\Attack\价格库\prices.db')
+# 价格库(独立 db,跨库引用) · 兄弟项目 MaterialWebPrices
+# 优先相对路径 ROOT/data/prices.db(Mac / Linux / Windows 通用)
+# Mac 暂未启用价格库 — 文件不存在时 prices handler 会 try/except 兜底
+PRICES_DB_PATH = ROOT / 'data' / 'prices.db'
 PRICES_KEYWORDS_PATH = ROOT / 'data' / 'material_price_keywords.json'
 UPLOAD_DIR  = ROOT / 'data' / 'uploads'
 QR_DIR      = ROOT / 'data' / 'qr_codes'

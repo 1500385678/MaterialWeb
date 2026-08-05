@@ -31,14 +31,32 @@
 
 ---
 
-## 1. 怎么启动(3 步)
+## 1. 怎么启动(3 步 · Mac / Windows 双平台)
+
+### 🍎 Mac (本机默认)
+
+```bash
+# 第 1 步:打开 Terminal,切到这个文件夹
+cd /Users/aaron/Mac/WorkTeam/05_Space/03_Architect/Defense/06-Material/_ArchiDefenseMaterial/MaterialWeb/
+
+# 第 2 步:启动后台服务(关掉窗口也不会停)
+python3 scripts/daemon.py
+
+# 第 3 步:打开浏览器
+#    http://127.0.0.1:8086/
+```
+
+> **Mac 用 `source` 替 `powershell`**(没有 venv 就 `python3` 直接跑,跟下面 Linux 通用)。
+
+### 🪟 Windows (PowerShell)
 
 ```powershell
 # 第 1 步:打开 PowerShell,切到这个文件夹
-cd D:\Mac\Mac\workteam\05_space\03_architect\_ArchitectLib\MaterialWeb-v1.0
+#    Windows 路径仅作历史参考 — 实际开发在 Mac mini 上
+#    如需在 Windows 跑,先 git clone 同步本仓,再按本机实际路径改 cd
 
-# 第 2 步:启动后台服务(关掉窗口也不会停)
-python scripts/daemon.py
+# 第 2 步:启动后台服务
+python scripts\daemon.py
 
 # 第 3 步:打开浏览器
 #    http://127.0.0.1:8086/
@@ -48,11 +66,11 @@ python scripts/daemon.py
 最后一行:`[daemon] OK · http://127.0.0.1:8086/`
 
 **怎么知道有没有坏?**
-`python tests/smoke.py` → `✅ 8/8 endpoints OK` 就对了。
+`python3 tests/smoke.py` → `✅ 8/8 endpoints OK` 就对了。
 
 **想看实时日志?** 前台模式:
-```powershell
-python -X utf8 -u -m server
+```bash
+python3 -X utf8 -u -m server
 ```
 
 ---

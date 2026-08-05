@@ -15,9 +15,11 @@
 | 后端 | Flask + SQLite,**2 个 pip 依赖**(flask + qrcode + reportlab) |
 | 前端 | 原生 ES Modules,**零 npm 依赖** |
 | 数据 | SQLite + 文件系统(uploads / qr_codes / media) |
-| 启动 | `python scripts/daemon.py`(后台) · `python -m server`(前台) |
-| 验证 | `python tests/smoke.py` → `✅ 8/8 endpoints OK` |
+| 启动(Mac) | `python3 scripts/daemon.py`(后台) · `python3 -m server`(前台) |
+| 启动(Win) | `python scripts\daemon.py`(后台) · `python -m server`(前台) |
+| 验证 | `python3 tests/smoke.py` → `✅ 8/8 endpoints OK` |
 | 体量 | **~3700 行** (Py 1850 + JS 1600 + HTML/CSS 450) |
+| 工作目录 | `/Users/aaron/Mac/WorkTeam/05_Space/03_Architect/Defense/06-Material/_ArchiDefenseMaterial/MaterialWeb/` |
 
 ---
 
@@ -205,7 +207,8 @@
 | 端点 500 | `server.out` / `server.err`(本目录) |
 | 前端不刷新 | 浏览器硬刷 Ctrl+Shift+R(已 no-store) |
 | 数据丢失 | 检查 `data/uploads/` `data/qr_codes/` 还在不在 |
-| 端口冲突 | `netstat -ano -p TCP \| findstr :8086` 杀 PID |
+| 端口冲突 (Mac) | `lsof -ti:8086 \| xargs kill -9`(杀 8086 进程) |
+| 端口冲突 (Win) | `netstat -ano -p TCP \| findstr :8086` 杀 PID |
 
 ---
 
