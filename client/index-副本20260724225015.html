@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>建筑材料数据库 · MaterialWeb v1.0</title>
+<link rel="stylesheet" href="/css/common.css">
+</head>
+<body>
+
+<!-- ====== 顶部导航 ====== -->
+<nav class="navbar">
+  <div class="navbar-brand">🏗️ 材料库<span>MaterialWeb v1.0</span></div>
+  <ul class="nav-tabs">
+    <li><a data-tab="materials" class="active">材料库</a></li>
+    <li><a data-tab="projects">我的项目</a></li>
+    <li><a data-tab="exam">考试学习</a></li>
+    <li><a data-tab="ai">🤖 AI 选材</a></li>
+  </ul>
+  <div class="nav-spacer"></div>
+  <button id="nav-model-btn" class="nav-settings-btn" onclick="modelSettings.open()" title="配置 AI 模型 API">
+    <span class="dot"></span>模型设置
+  </button>
+</nav>
+
+<!-- ====== 模型设置弹窗 ====== -->
+<div id="model-settings-modal" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-title">⚙ AI 模型设置</div>
+      <button class="modal-close" onclick="modelSettings.close()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="ms-hint" style="margin-bottom:14px;">
+        可配置自己的 OpenAI 兼容视觉模型 API。<b>不填则使用系统默认 matrix MCP</b>。
+        配置后在"AI 选材"使用。
+      </div>
+      <div class="ms-field">
+        <label>API 入口 URL(OpenAI 兼容)</label>
+        <input type="text" id="ms-api-url" placeholder="https://api.openai.com">
+        <div class="ms-presets"></div>
+      </div>
+      <div class="ms-field">
+        <label>API Key</label>
+        <input type="password" id="ms-api-key" placeholder="sk-...">
+      </div>
+      <div class="ms-field">
+        <label>模型名</label>
+        <input type="text" id="ms-model-name" placeholder="gpt-4o / gpt-4-vision / deepseek-vl / qwen-vl-max 等">
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
+        <button class="btn btn-outline" onclick="modelSettings.test()" id="ms-test-btn">测试连接</button>
+        <span id="ms-status" class="ms-status"><span class="dot"></span><span>未配置</span></span>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="modelSettings.save()">保存</button>
+        <button class="btn btn-outline" onclick="modelSettings.clear()">清空(回默认)</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-outline" onclick="modelSettings.close()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 材料库页 ====== -->
+<div id="page-materials" class="container page active">
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="按名称、英文、子类搜索">
+    <select class="filter" id="filterCategory">
+      <option value="">全部分类</option>
+    </select>
+    <select class="filter" id="filterFire">
+      <option value="">全部燃烧等级</option>
+      <option value="A1">A1 不燃</option>
+      <option value="B1">B1 难燃</option>
+      <option value="B2">B2 可燃</option>
+    </select>
+    <select class="filter" id="filterCost">
+      <option value="">全部造价</option>
+      <option value="低">💰 低端</option>
+      <option value="中">💰💰 中端</option>
+      <option value="高">💰💰💰 高端</option>
+    </select>
+    <button class="btn btn-outline" onclick="filters.reset()">重置</button>
+  </div>
+  <div id="materialsGrid" class="materials-grid">
+    <div class="empty"><div class="empty-icon">📦</div><p>加载中...</p></div>
+  </div>
+</div>
+
+<!-- ====== 我的项目页 ====== -->
+<div id="page-projects" class="container page">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="font-size:20px;">项目列表</h2>
+    <button class="btn btn-primary" onclick="projects.showNewForm()">+ 新建项目</button>
+  </div>
+  <div id="newProjectForm" class="add-material-form" style="display:none; margin-bottom:20px;">
+    <h3 style="margin-bottom:14px; font-size:15px;">新建项目</h3>
+    <div class="form-row">
+      <div class="form-group flex-1">
+        <label>项目名</label>
+        <input type="text" id="newProjectName" placeholder="如:XX 住宅">
+      </div>
+      <div class="form-group flex-1">
+        <label>项目类型</label>
+        <select id="newProjectType">
+          <option value="住宅">住宅</option><option value="商业">商业</option>
+          <option value="办公">办公</option><option value="酒店">酒店</option>
+          <option value="文化建筑">文化建筑</option>
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>建筑面积 (m²)</label>
+        <input type="number" id="newProjectArea" placeholder="5000">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary btn-sm" onclick="projects.create()">确认创建</button>
+      <button class="btn btn-outline btn-sm" onclick="projects.hideNewForm()">取消</button>
+    </div>
+  </div>
+  <div id="projectList" class="project-list"></div>
+</div>
+
+<!-- ====== 考试学习页 ====== -->
+<div id="page-exam" class="container page">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="font-size:20px;">📚 考试学习 · 一注 4.1 建筑材料</h2>
+    <select class="filter" id="filterExamChapter">
+      <option value="4.1">第 4.1 章</option>
+    </select>
+  </div>
+  <div id="examGrid" class="exam-grid"></div>
+</div>
+
+<!-- ====== AI 选材页 ====== -->
+<div id="page-ai" class="container page">
+  <div class="ai-stepper" id="ai-stepper">
+    <div class="ai-step active" data-step="1"><span class="ai-step-num">1</span>上传图片</div>
+    <div class="ai-step-divider"></div>
+    <div class="ai-step" data-step="2"><span class="ai-step-num">2</span>AI 识图</div>
+    <div class="ai-step-divider"></div>
+    <div class="ai-step" data-step="3"><span class="ai-step-num">3</span>确认信息</div>
+    <div class="ai-step-divider"></div>
+    <div class="ai-step" data-step="4"><span class="ai-step-num">4</span>选材料</div>
+    <div class="ai-step-divider"></div>
+    <div class="ai-step" data-step="5"><span class="ai-step-num">5</span>保存</div>
+  </div>
+
+  <div class="ai-panel" id="ai-step-1-panel">
+    <h2 style="font-size:18px;margin-bottom:14px;">📷 上传图片 + 补充上下文</h2>
+    <div class="ai-upload-area" id="ai-upload-area">
+      <div class="upload-icon">⬆️</div>
+      <p>点击或拖拽图片到此处</p>
+      <div class="upload-hint">支持 PNG / JPG / WEBP / GIF · 最大 16MB</div>
+      <input type="file" id="ai-file-input" accept="image/*" style="display:none;">
+    </div>
+    <div id="ai-preview-wrap" style="display:none"></div>
+
+    <h3 style="font-size:14px;margin:20px 0 10px;color:var(--text-muted);">补充上下文(选填,帮助模型识别更准)</h3>
+    <div class="ai-form-row">
+      <div class="form-group">
+        <label>项目类型</label>
+        <select id="ai-ctx-type">
+          <option value="">不限</option><option>住宅</option><option>商业</option>
+          <option>办公</option><option>酒店</option><option>文化建筑</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>部位</label>
+        <select id="ai-ctx-location">
+          <option value="">不限</option><option>外墙</option><option>室内</option>
+          <option>地面</option><option>幕墙</option><option>屋顶</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>造价档</label>
+        <select id="ai-ctx-cost">
+          <option value="">不限</option><option>低</option><option>中</option><option>高</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>建筑风格</label>
+        <select id="ai-ctx-style">
+          <option value="">不限</option><option>现代</option><option>极简</option>
+          <option>新中式</option><option>欧式</option><option>工业</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>补充说明(自由文本)</label>
+        <input type="text" id="ai-ctx-note" placeholder="如:重点关注绿色建材">
+      </div>
+    </div>
+    <div class="ai-btn-row">
+      <button class="btn btn-primary" id="ai-start-btn" onclick="aiFlow.startAnalysis()" disabled>开始 AI 识图 →</button>
+      <button class="btn btn-outline" onclick="aiFlow.reset()">重置</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-outline" onclick="aiSchemes.show()">查看已保存的方案</button>
+    </div>
+  </div>
+
+  <div class="ai-panel" id="ai-step-2-panel" style="display:none">
+    <div class="ai-loading">
+      <div class="spinner"></div>
+      <p>AI 正在识图...</p>
+      <p style="font-size:12px;color:#666;margin-top:6px;">视觉模型调用通常 10-30 秒</p>
+    </div>
+  </div>
+
+  <div class="ai-panel" id="ai-step-3-panel" style="display:none">
+    <h2 style="font-size:18px;margin-bottom:14px;">✓ 确认 AI 提取的信息 <span style="font-size:12px;color:var(--text-muted);font-weight:400;">(点击可编辑/删除/添加)</span></h2>
+    <div id="ai-confirm-image" style="margin-bottom:14px;"></div>
+    <div class="ai-confirm-card">
+      <h3>场景描述</h3>
+      <textarea id="ai-confirm-desc" placeholder="AI 提取的场景描述"></textarea>
+    </div>
+    <div class="ai-confirm-card">
+      <h3>场景类型 / 风格</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group">
+          <label style="font-size:12px;color:var(--text-muted);">类型</label>
+          <select id="ai-confirm-context">
+            <option>外墙</option><option>室内</option><option>景观</option>
+            <option>幕墙</option><option>屋顶</option><option>其他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="font-size:12px;color:var(--text-muted);">风格</label>
+          <select id="ai-confirm-style">
+            <option>现代</option><option>极简</option><option>新中式</option>
+            <option>欧式</option><option>工业</option><option>其他</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="ai-confirm-card">
+      <h3>识别到的材质(可删/编辑每一项)</h3>
+      <div id="ai-mat-chips" class="ai-mat-chips-wrap"></div>
+      <button class="ai-add-chip" onclick="aiFlow.addChip()">+ 添加识别项</button>
+    </div>
+    <div class="ai-confirm-card">
+      <h3>搜索关键词(逗号分隔 · 优化数据库匹配范围)</h3>
+      <input type="text" id="ai-confirm-keywords" placeholder="如:石材, 幕墙, 金属, 灰色, 住宅外墙">
+    </div>
+    <div class="ai-btn-row">
+      <button class="btn btn-primary" onclick="aiFlow.searchMaterials()">用这些信息搜索 →</button>
+      <button class="btn btn-outline" onclick="aiFlow.gotoStep(1)">← 重选图片</button>
+    </div>
+  </div>
+
+  <div class="ai-panel" id="ai-step-4-panel" style="display:none">
+    <h2 style="font-size:18px;margin-bottom:14px;">💡 匹配到的材料 <span style="font-size:12px;color:var(--text-muted);font-weight:400;" id="ai-result-summary"></span></h2>
+    <div id="ai-results-list"></div>
+    <div class="ai-actions-bar">
+      <div class="selected-count">已选 <strong id="ai-selected-count">0</strong> 项</div>
+      <div class="spacer"></div>
+      <button class="btn btn-outline" onclick="aiFlow.gotoStep(3)">← 改识别</button>
+      <button class="btn btn-primary" onclick="aiFlow.gotoSave()">下一步保存方案 →</button>
+    </div>
+  </div>
+
+  <div class="ai-panel" id="ai-step-5-panel" style="display:none">
+    <h2 style="font-size:18px;margin-bottom:14px;">💾 保存为方案</h2>
+    <div class="ai-confirm-card">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--text-muted);">方案名</label>
+        <input type="text" id="ai-scheme-name" placeholder="如:XX 住宅外墙初选方案">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--text-muted);">方案说明(选填)</label>
+        <textarea id="ai-scheme-desc" style="min-height:60px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label style="font-size:12px;color:var(--text-muted);">关联项目(选填)</label>
+        <select id="ai-scheme-project"><option value="">不关联</option></select>
+      </div>
+    </div>
+    <div class="ai-confirm-card">
+      <h3>已选材料(<span id="ai-save-count">0</span> 项)</h3>
+      <div id="ai-save-list" style="font-size:13px;color:var(--text-muted);"></div>
+    </div>
+    <div class="ai-btn-row">
+      <button class="btn btn-primary" onclick="aiFlow.saveScheme()">保存方案</button>
+      <button class="btn btn-outline" onclick="aiFlow.gotoStep(4)">← 改选材料</button>
+    </div>
+  </div>
+
+  <div id="ai-schemes-modal" class="modal-overlay" style="display:none;">
+    <div class="modal" style="max-width:880px; max-height: 88vh;">
+      <div class="modal-header">
+        <div class="modal-title">📂 已保存的方案</div>
+        <button class="modal-close" onclick="utils.closeModal('ai-schemes-modal')">×</button>
+      </div>
+      <div class="modal-body" style="max-height: calc(88vh - 60px); overflow-y: auto;">
+        <div id="ai-schemes-list" class="ai-schemes-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scheme-detail-modal" class="modal-overlay" style="display:none;">
+    <div class="modal" style="max-width:860px; max-height: 90vh;">
+      <div class="modal-header">
+        <div class="modal-title" id="sd-title">方案详情</div>
+        <button class="modal-close" onclick="aiSchemes.closeDetail()">×</button>
+      </div>
+      <div class="modal-body" id="sd-body" style="max-height: calc(90vh - 60px); overflow-y: auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 材料详情弹窗 ====== -->
+<div id="materialModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">材料详情</div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn btn-outline btn-sm" id="btnQR">📱 二维码</button>
+        <button class="btn btn-sm btn-success" id="btnAddToProject">+ 添加到项目</button>
+        <button class="modal-close" onclick="utils.closeModal('materialModal')">×</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="modalTags" style="margin-bottom:12px;"></div>
+      <div class="tabs">
+        <button class="tab-btn active" data-mtab="basic">基本信息</button>
+        <button class="tab-btn" data-mtab="gallery">图片</button>
+        <button class="tab-btn" data-mtab="cad">CAD 资料</button>
+        <button class="tab-btn" data-mtab="structure">构造节点</button>
+        <button class="tab-btn" data-mtab="supplier">供应商</button>
+        <button class="tab-btn" data-mtab="exam">考试要点</button>
+      </div>
+      <div id="tab-basic" class="tab-content active"><div class="detail-grid" id="basicInfo"></div></div>
+      <div id="tab-structure" class="tab-content"><p id="structureNotes" style="font-size:14px; line-height:1.8;"></p></div>
+      <div id="tab-gallery" class="tab-content"><div id="imageGallery" class="image-gallery"></div></div>
+      <div id="tab-cad" class="tab-content"><div id="cadList" class="cad-list"></div></div>
+      <div id="tab-supplier" class="tab-content">
+        <table class="supplier-table">
+          <thead><tr><th>品牌</th><th>类型</th><th>特点</th><th>适用项目</th></tr></thead>
+          <tbody id="supplierList"></tbody>
+        </table>
+      </div>
+      <div id="tab-exam" class="tab-content"><div id="examContent"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 项目详情弹窗 ====== -->
+<div id="projectModal" class="modal-overlay">
+  <div class="modal" style="max-width:900px;">
+    <div class="modal-header">
+      <div class="modal-title" id="projectModalTitle">项目详情</div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="projects.exportDocx()">📄 导出文档</button>
+        <button class="modal-close" onclick="utils.closeModal('projectModal')">×</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="projectCostSummary"></div>
+      <h3 style="font-size:15px; margin:16px 0 10px;">添加材料</h3>
+      <div class="add-material-form" style="margin-bottom:20px;">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>选材料</label>
+            <select id="addMatSelect"><option value="">-- 选择材料 --</option></select>
+          </div>
+          <div class="form-group flex-1">
+            <label>数量 (m²)</label>
+            <input type="number" id="addMatQty" value="100">
+          </div>
+          <div class="form-group flex-1">
+            <label>使用部位</label>
+            <select id="addMatLoc">
+              <option value="外墙">外墙</option><option value="室内">室内</option>
+              <option value="墙面">墙面</option><option value="地面">地面</option>
+              <option value="屋面">屋面</option><option value="吊顶">吊顶</option>
+            </select>
+          </div>
+          <div class="form-group" style="justify-content:flex-end;">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary btn-sm" onclick="projects.addMaterial()">添加</button>
+          </div>
+        </div>
+      </div>
+      <h3 style="font-size:15px; margin-bottom:10px;">材料清单</h3>
+      <div id="projectMaterialList" class="material-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 二维码弹窗 ====== -->
+<div id="qrModal" class="modal-overlay">
+  <div class="qr-modal">
+    <img id="qrImg" src="" alt="QR">
+    <p id="qrName"></p>
+    <p style="margin-top:8px;"><button class="btn btn-outline btn-sm" onclick="qrPanel.close()">关闭</button></p>
+  </div>
+</div>
+
+<!-- ====== Toast ====== -->
+<div id="toast" class="toast"></div>
+
+<!-- ====== 灯箱 ====== -->
+<div id="lightbox" class="lightbox-overlay" style="display:none;">
+  <button class="lightbox-close" onclick="media.closeLightbox()">×</button>
+  <img id="lightboxImg" class="lightbox-img" src="" alt="">
+</div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>

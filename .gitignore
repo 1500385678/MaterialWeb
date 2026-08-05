@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+# Runtime
+api_server.err
+api_server.out
+server.err
+server.out
+# Local DBs (rebuild on init)
+materials.db
+data/*.db
+db/*.db
+_MaterialDb/*.db
+# Uploaded media (not source)
+uploads/
+media/
+qr_codes/
