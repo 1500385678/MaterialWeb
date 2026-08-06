@@ -12,8 +12,12 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.resolve()  # MaterialWeb-v1.0 根
-PORT = 8086
-HOST = '127.0.0.1'
+
+# 端口/host 单一事实源(§6.2)· 改 → server/config.py 改一处,daemon 自动跟随
+sys.path.insert(0, str(ROOT))
+from server.config import PORT  # noqa: E402
+
+HOST = '127.0.0.1'  # 本机环回,健康检查 localhost 即可,不绑 0.0.0.0
 
 
 def kill_old():

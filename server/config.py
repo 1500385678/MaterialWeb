@@ -1,5 +1,6 @@
 """路径 / 端口 / 目录常量
-改这里 → 同步 _archive 里原始 init_db.py 的 DB_PATH 引用 + scripts/daemon.py 的 PORT
+改这里 → 同步 _archive 里原始 init_db.py 的 DB_PATH 引用
+端口/host 是单一事实源(§6.2),daemon.py / 文档 / README 必须从这里 import,不再各自硬编码
 """
 from pathlib import Path
 
@@ -22,7 +23,9 @@ STATIC_DIR  = ROOT / 'client'        # 前端静态资源
 
 # 服务
 HOST        = '0.0.0.0'
-PORT        = 8086                   # 标准端口 (与 README/CONTROL 一致)
+# canonical · 改这里只此一处 · daemon.py 必须 from server.config import PORT
+# 2026-08-06 verifier 提示:历史曾跑 8093(被僵尸进程占 8086 时临时换),daemon.py 现在与 config.py 同步
+PORT        = 8086
 DEBUG       = True                   # dev 模式,生产改 False
 
 # 限制
