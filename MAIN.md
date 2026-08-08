@@ -124,6 +124,7 @@ server/__main__.py  ─┬─→  routes.py  ──→  handlers/* (11 支程序
 | 加一个 API 端点 | 支(handlers) | 写新 handler → `routes.py` 注册 → `docs/api_contract.md` 同步 |
 | 加一个 UI 模块 | 支(modules) | 写新 module → `main.js` import + init |
 | 改端口 / 路径 | **主** | 改 `config.py` + `scripts/daemon.py` |
+| 改 HOST / CORS / IP 白名单 | **主** | 改 `config.py` 默认值(env override 见 §6.2) + `core.py` 写权限中间件同步;改完必查 README:225 / CONTROL:133 / CONTROL:155「LAN 暴露」一致 |
 | 改 BaseHandler | **主** | 改 `core.py` → 检查所有 handler 兼容 |
 | 改字段 | **主** | 改 `init_schema.sql` → 备份 DB 后重灌 |
 | 调样式 | 支(css) | 改 `common.css` |

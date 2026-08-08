@@ -24,7 +24,25 @@ def create_app() -> Flask:
         if db is not None:
             db.close()
 
-    # CORS + 静态防缓存
+    # CORS + 静态防缓存 + 写权限 IP 白名单(铁律 #6)
+    @app.before_request
+    def _check_write_permission():
+        """写操作(POST/PUT/DELETE/PATCH)仅允许白名单 IP,GET 限流不限源"""
+        if request.method in config.WRITE_METHODS:
+            # request.remote_addr 在 werkzeug 已被 ProxyFix / 反代修正,无反代时直连 IP
+            remote = request.remote_addr or ''
+            # 反代场景取 X-Forwarded-For 第一段(若已部署反代,务必加 ProxyFix 配置)
+            xff = request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
+            client_ip = xff or remote
+            if client_ip not in config.ALLOWED_LAN_IPS:
+                from flask import jsonify
+                return jsonify({
+                    'error': 'forbidden',
+                    'message': f'write method {request.method} not allowed from {client_ip}',
+                    'allowed': sorted(config.ALLOWED_LAN_IPS),
+                }), 403
+        return None
+
     @app.after_request
     def add_cors(resp):
         resp.headers['Access-Control-Allow-Origin']  = config.CORS_ORIGIN
