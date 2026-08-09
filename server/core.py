@@ -69,6 +69,11 @@ def create_app() -> Flask:
     # 蓝图注册
     from .routes import register_blueprints
     register_blueprints(app)
+
+    # PDF 任务线程池(P0 修 2026-08-09 夜间迭代批 3)· 延迟到第一次 submit 时才 init,
+    # 避免测试场景下也拉起 worker。
+    from .workers import pdf_pool
+    pdf_pool.init_pool()
     return app
 
 

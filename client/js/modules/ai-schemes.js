@@ -72,8 +72,40 @@ export const aiSchemes = {
     catch (e) { toast('删除失败: ' + e.message, 'error'); }
   },
 
-  exportPdf(id) {
-    window.open(api.exportPdfUrl(id), '_blank');
+  // 异步 PDF 导出(P0 修 2026-08-09 夜间迭代批 3):doc.build 改到后端线程池,
+  // 前端 POST 拿 task_id → 每 1s 轮询 status → done 后下载,期间不阻塞 UI
+  async exportPdf(id) {
+    let task;
+    try {
+      task = await api.submitExportPdf(id);
+      toast(`PDF 生成中(task=${task.task_id})...`);
+    } catch (e) {
+      // 异步端点失败时回退到旧的 GET 同步端点(保底)
+      toast('异步提交失败,回退到同步导出...', 'error');
+      window.open(api.exportPdfUrl(id), '_blank');
+      return;
+    }
+    const taskId = task.task_id;
+    const startedAt = Date.now();
+    const TIMEOUT_MS = 90_000;  // 90s 上限
+    const POLL_MS    = 1_000;
+    while (Date.now() - startedAt < TIMEOUT_MS) {
+      await new Promise(r => setTimeout(r, POLL_MS));
+      let st;
+      try { st = await api.pollExportStatus(id, taskId); }
+      catch (_) { continue; }
+      if (st.status === 'done') {
+        toast('PDF 已就绪,开始下载', 'success');
+        window.location.href = api.downloadExportPdfUrl(id, taskId);
+        return;
+      }
+      if (st.status === 'error') {
+        toast('PDF 生成失败: ' + (st.error || '未知错误'), 'error');
+        return;
+      }
+      // pending 继续轮询
+    }
+    toast('PDF 生成超时(>90s),请稍后重试或查看 server 日志', 'error');
   },
 
   async reload(id) {
