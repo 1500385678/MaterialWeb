@@ -7,6 +7,17 @@ from flask import Flask, g, request, send_from_directory
 from . import config
 
 
+# 铁律 #5 · 静态前端 no-store 白名单(精确 MIME · 小写 · 不含 charset)
+# 见 CONTROL.md 铁律 #5 + tests/test_cache_headers.py
+# 2026-08-11 夜间迭代批 2 改 · P2 Verifier row 71
+_NO_STORE_TYPES = frozenset({
+    'text/html',
+    'text/css',
+    'application/javascript',
+    'text/javascript',
+})
+
+
 def create_app() -> Flask:
     """工厂模式,便于测试和多实例"""
     app = Flask(
@@ -48,11 +59,17 @@ def create_app() -> Flask:
         resp.headers['Access-Control-Allow-Origin']  = config.CORS_ORIGIN
         resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
         resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        ct = resp.headers.get('Content-Type', '')
-        if any(s in ct for s in ('text/html', 'text/css', 'javascript')):
+        # 铁律 #5 · 静态前端禁缓存(AI 改完不生效问题)
+        # 白名单精确匹配:text/html, text/css, application/javascript, text/javascript
+        # 不再 substring('javascript' 误伤 / 漏 application/ecmascript 等)
+        # 2026-08-11 夜间迭代批 2 改 · P2 Verifier row 71
+        ct = (resp.headers.get('Content-Type', '') or '').split(';')[0].strip().lower()
+        if ct in _NO_STORE_TYPES:
             resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
             resp.headers['Pragma']        = 'no-cache'
             resp.headers['Expires']       = '0'
+            # 避免 gzip 缓存串 — 反代/浏览器按 Accept-Encoding 区分缓存条目
+            resp.headers['Vary'] = 'Accept-Encoding'
         return resp
 
     @app.route('/<path:_>', methods=['OPTIONS'])

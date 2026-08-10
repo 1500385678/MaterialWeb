@@ -12,6 +12,10 @@ materials.db
 data/*.db
 db/*.db
 _MaterialDb/*.db
+# SQLite WAL artifacts (transient, regenerated on connect)
+*.db-shm
+*.db-wal
+*.db-journal
 # Uploaded media (not source)
 uploads/
 media/

@@ -129,7 +129,7 @@
 | 2 | **端口 8086** | 改 → 同步 config.py + daemon.py + 文档 |
 | 3 | **API 路径只加不删** | 删字段会让 v0(5188)前端失效 |
 | 4 | **API 响应字段只加不删** | 同上 |
-| 5 | **HTML/CSS/JS 全部 no-store** | 否则 AI 改完不生效 |
+| 5 | **HTML/CSS/JS 全部 no-store**(白名单: text/html, text/css, application/javascript, text/javascript · 精确 MIME,小写,不含 charset) | 否则 AI 改完不生效 |
 | 6 | **写权限限本机 IP** | dev 默认 127.0.0.1 + 写前 IP 白名单中间件;LAN 例外靠 `MW_HOST=0.0.0.0 MW_ALLOWED_LAN_IPS=<...>` 临时开 |
 | 7 | **并发上限 20** | 超出 503 |
 | 8 | **用 bus 跨模块,别直接 import 内部变量** | 循环依赖 |
@@ -146,6 +146,8 @@
 - 主流程:看材料 → 创建项目 → AI 选材 → 保存方案 → 导出 PDF
 - 数据已迁移:materials.db 160KB + 11 张 AI 图 + 4 个 QR
 - 已关闭 werkzeug watchdog reloader(2026-08-10 夜间迭代修):daemon 启动强制 `MW_DEBUG=0`,server.out 不再每改文件整进程重启,启动 banner 打印 `MW_DEBUG=0, reloader=off` 便于排错
+- search_by_analysis 加 SQL 预过滤(2026-08-11 夜间迭代批 2 改 · P1):_PRE_FILTER_LIMIT=500 + 抽 _score_row + 8 字段精排;1000 行 fixture P95 < 200ms 契约(tests/search_bench.py)
+- Cache-Control 改白名单精确匹配(2026-08-11 夜间迭代批 2 改 · P2):substring('javascript') → set 查 {text/html, text/css, application/javascript, text/javascript},加 Vary: Accept-Encoding 防 gzip 缓存串(tests/test_cache_headers.py 覆盖 .html/.css/.js/.png/JSON 五场景)
 
 ### ⚠️ 已知问题
 - Flask 保留(偏离 v2.5 § 6.2 铁律,因 PDF/二维码需要)
