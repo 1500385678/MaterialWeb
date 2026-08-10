@@ -145,6 +145,7 @@
 - 8/8 端点 smoke test 通过
 - 主流程:看材料 → 创建项目 → AI 选材 → 保存方案 → 导出 PDF
 - 数据已迁移:materials.db 160KB + 11 张 AI 图 + 4 个 QR
+- 已关闭 werkzeug watchdog reloader(2026-08-10 夜间迭代修):daemon 启动强制 `MW_DEBUG=0`,server.out 不再每改文件整进程重启,启动 banner 打印 `MW_DEBUG=0, reloader=off` 便于排错
 
 ### ⚠️ 已知问题
 - Flask 保留(偏离 v2.5 § 6.2 铁律,因 PDF/二维码需要)

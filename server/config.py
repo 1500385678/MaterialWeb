@@ -29,7 +29,9 @@ HOST        = os.getenv('MW_HOST', '127.0.0.1')
 # canonical · 改这里只此一处 · daemon.py 必须 from server.config import PORT
 # 2026-08-06 verifier 提示:历史曾跑 8093(被僵尸进程占 8086 时临时换),daemon.py 现在与 config.py 同步
 PORT        = 8086
-DEBUG       = True                   # dev 模式,生产改 False
+# DEBUG 默认 1(开发模式,启用 reloader)· 生产(detached daemon)务必 MW_DEBUG=0
+# 走 env 切换,daemon.py 在 Popen 前强制写 0,关闭 werkzeug watchdog(避免 server.out 噪音)
+DEBUG       = os.getenv('MW_DEBUG', '1' if __debug__ else '0') == '1'
 
 # 限制
 ALLOWED_EXTS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}

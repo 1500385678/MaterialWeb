@@ -62,7 +62,12 @@ def wait_ready(timeout=15):
 
 
 def start_detached():
-    """detached 后台启动"""
+    """detached 后台启动
+    强制 MW_DEBUG=0:关 werkzeug watchdog reloader(避免文件变更触发整进程重启 + server.out 噪音)
+    生产模式不需要 reloader,daemon 长驻只跑一遍启动代码
+    """
+    # 强制关 DEBUG(reloader 也跟着关)· 子进程继承 env
+    os.environ['MW_DEBUG'] = '0'
     if sys.platform == 'win32':
         DETACHED_PROCESS = 0x00000008
         CREATE_NEW_PROCESS_GROUP = 0x00000200
