@@ -7,6 +7,9 @@ api_server.err
 api_server.out
 server.err
 server.out
+# Editor/daemon auto-backup (e.g. WPS "副本", Sublime "-副本", daemon "-副本<ts>")
+# Source 已迁 _archive/_source_backups/;runtime log 已迁 _archive/_runtime_logs/
+*-副本*
 # Local DBs (rebuild on init)
 materials.db
 data/*.db
