@@ -11,7 +11,11 @@ export const aiFlow = {
     // Step 1 — 上传
     $('#ai-file-input')?.addEventListener('change', e => this.onFile(e));
     const dropZone = $('#ai-upload-area');
-    if (dropZone) {
+    const fileInput = $('#ai-file-input');
+    if (dropZone && fileInput) {
+      // 点击上传区触发 file input(原代码只支持拖拽,点不动)
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.style.cursor = 'pointer';
       dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = 'var(--primary)'; });
       dropZone.addEventListener('dragleave', () => dropZone.style.borderColor = '');
       dropZone.addEventListener('drop', e => {
