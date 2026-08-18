@@ -3,6 +3,7 @@
 """
 import base64
 import json
+import logging
 import os
 import re
 import subprocess
@@ -13,6 +14,8 @@ from pathlib import Path
 from flask import Blueprint, request, jsonify
 from .. import config
 from ..core import create_app  # noqa  (kept for future hooks)
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('vision', __name__)
 
@@ -102,7 +105,8 @@ def test_model():
     except urllib.error.HTTPError as e:
         body = ''
         try: body = e.read().decode('utf-8', errors='ignore')[:300]
-        except: pass
+        except (OSError, IOError, ValueError) as exc:
+            logger.warning('vision.test_model: read HTTPError body failed: %r', exc)
         return jsonify({'ok': False, 'error': f'HTTP {e.code} {e.reason}', 'detail': body}), e.code
     except urllib.error.URLError as e:
         return jsonify({'ok': False, 'error': f'无法连接: {e.reason}'}), 502
@@ -127,53 +131,72 @@ def analyze_image():
     f.save(str(fpath))
     abs_path = str(fpath.resolve()).replace('\\', '/')
 
-    # 2) 构造 prompt
-    user_ctx_raw = (request.form.get('context') or '').strip()
-    user_ctx = ''
-    if user_ctx_raw:
-        try:
-            obj = json.loads(user_ctx_raw)
-            lines = [f'- {k}: {v}' for k, v in obj.items() if v]
-            if lines: user_ctx = '用户的额外上下文:\n' + '\n'.join(lines)
-        except Exception:
-            user_ctx = f'用户的额外上下文:{user_ctx_raw}'
-    prompt = ANALYZE_PROMPT.format(user_context=user_ctx)
-
-    # 3) 调模型
-    custom_url   = (request.form.get('api_url') or '').strip()
-    custom_key   = (request.form.get('api_key') or '').strip()
-    custom_model = (request.form.get('model_name') or '').strip()
-    use_custom   = bool(custom_url and custom_key and custom_model)
-    engine       = '自定义' if use_custom else 'matrix MCP'
-
+    # P2 R18 · 失败时清理上传图,防 data/uploads/ 膨胀
+    # 成功路径在 try 末尾设 succeeded = True 后 return;任一 except 路径
+    # 不设 succeeded,finally 检测后 unlink。
+    succeeded = False
     try:
+        # 2) 构造 prompt
+        user_ctx_raw = (request.form.get('context') or '').strip()
+        user_ctx = ''
+        if user_ctx_raw:
+            try:
+                obj = json.loads(user_ctx_raw)
+                lines = [f'- {k}: {v}' for k, v in obj.items() if v]
+                if lines: user_ctx = '用户的额外上下文:\n' + '\n'.join(lines)
+            except Exception:
+                user_ctx = f'用户的额外上下文:{user_ctx_raw}'
+        prompt = ANALYZE_PROMPT.format(user_context=user_ctx)
+
+        # 3) 调模型
+        custom_url   = (request.form.get('api_url') or '').strip()
+        custom_key   = (request.form.get('api_key') or '').strip()
+        custom_model = (request.form.get('model_name') or '').strip()
+        use_custom   = bool(custom_url and custom_key and custom_model)
+        engine       = '自定义' if use_custom else 'matrix MCP'
+
         if use_custom:
             try:
                 stdout = _openai_vision(custom_url, custom_key, custom_model, abs_path, prompt)
             except urllib.error.HTTPError as e:
                 body = ''
                 try: body = e.read().decode('utf-8', errors='ignore')[:500]
-                except: pass
+                except (OSError, IOError, ValueError) as exc:
+                    logger.warning('vision.analyze_image: read custom HTTPError body failed: %r', exc)
                 return jsonify({
                     'error': f'自定义模型 HTTP {e.code} {e.reason}', 'detail': body,
                 }), e.code
         else:
-            req_file = config.UPLOAD_DIR / f'_req_{uuid.uuid4().hex[:8]}.json'
-            payload = {'image_info': [{'file': abs_path, 'prompt': prompt}]}
-            req_file.write_text(
-                json.dumps(payload, ensure_ascii=False), encoding='utf-8'
+            # matrix MCP fallback · 2026-08-18 改为直接调 matrix HTTP API
+            # 原 mavis CLI 路径已 broken (resources\resources\daemon\cli.js 不存在)
+            # matrix HTTP: https://agent.minimaxi.com/mavis/api/v1/llm/v1/chat/completions
+            #             + model=MiniMax-M3 (支持 image attachment)
+            matrix_url = os.environ.get('MATRIX_API_URL', 'https://agent.minimaxi.com/mavis/api/v1/llm/v1/chat/completions')
+            matrix_key = (
+                os.environ.get('MATRIX_API_KEY') or
+                os.environ.get('MINIMAX_API_KEY') or
+                os.environ.get('MAVIS_API_KEY') or
+                os.environ.get('OPENAI_API_KEY') or
+                ''
             )
+            matrix_model = os.environ.get('MATRIX_MODEL', 'MiniMax-M3')
+            if not matrix_key:
+                return jsonify({
+                    'error': 'matrix MCP 未配置:需在 环境变量 MATRIX_API_KEY / MINIMAX_API_KEY / MAVIS_API_KEY / OPENAI_API_KEY 之一填 API key,或在「模型设置」填自定义视觉模型。',
+                    'hint': '推荐:在右上「模型设置」填 OpenAI 兼容视觉 API(URL/Key/Model 名)',
+                }), 503
             try:
-                result = subprocess.run(
-                    ['mavis', 'mcp', 'call', 'matrix', 'matrix_describe_images',
-                     '--file', str(req_file)],
-                    capture_output=True, text=True,
-                    timeout=config.VISION_TIMEOUT, encoding='utf-8',
+                stdout = _openai_vision(
+                    matrix_url, matrix_key, matrix_model, abs_path, prompt,
                 )
-                stdout = result.stdout or ''
-            finally:
-                try: req_file.unlink()
-                except: pass
+            except urllib.error.HTTPError as e:
+                body = ''
+                try: body = e.read().decode('utf-8', errors='ignore')[:500]
+                except (OSError, IOError) as exc:
+                    logger.warning('vision.analyze_image: read matrix HTTPError body failed: %r', exc)
+                return jsonify({
+                    'error': f'matrix HTTP {e.code} {e.reason}', 'detail': body,
+                }), e.code
 
         # 解析 JSON
         m = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', stdout, re.DOTALL)
@@ -188,24 +211,34 @@ def analyze_image():
             return jsonify({
                 'error': f'{engine} 返回无法解析: {e}', 'raw': stdout[:2000],
             }), 500
+
+        # 4) 兜底字段
+        analysis.setdefault('scene_description', '')
+        analysis.setdefault('context', '其他')
+        analysis.setdefault('style', '其他')
+        if not isinstance(analysis.get('identified_materials'), list):
+            analysis['identified_materials'] = []
+        if not isinstance(analysis.get('search_keywords'), list):
+            analysis['search_keywords'] = []
+
+        succeeded = True
+        return jsonify({
+            'analysis': analysis,
+            'image_url': f'/uploads/{fname}',
+            'image_filename': fname,
+            'engine': engine,
+        })
+    except urllib.error.HTTPError as e:
+        return jsonify({'error': f'视觉模型 HTTP {e.code} {e.reason}'}), e.code
     except Exception as e:
+        logger.warning('vision.analyze_image failed: %r', e)
         return jsonify({'error': f'分析过程出错: {e}'}), 500
-
-    # 4) 兜底字段
-    analysis.setdefault('scene_description', '')
-    analysis.setdefault('context', '其他')
-    analysis.setdefault('style', '其他')
-    if not isinstance(analysis.get('identified_materials'), list):
-        analysis['identified_materials'] = []
-    if not isinstance(analysis.get('search_keywords'), list):
-        analysis['search_keywords'] = []
-
-    return jsonify({
-        'analysis': analysis,
-        'image_url': f'/uploads/{fname}',
-        'image_filename': fname,
-        'engine': engine,
-    })
+    finally:
+        if not succeeded:
+            try:
+                fpath.unlink(missing_ok=True)
+            except (OSError, IOError) as exc:
+                logger.warning('vision.analyze_image: cleanup failed upload %s: %r', fpath, exc)
 
 
 def register(app): app.register_blueprint(bp)
