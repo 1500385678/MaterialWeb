@@ -16,6 +16,11 @@ import { utils } from './modules/utils.js';
 
 // 全局暴露(给 inline onclick 调用,逐步去掉)
 window.state = state;
+window.aiFlow = aiFlow;
+window.aiSchemes = aiSchemes;
+window.modelSettings = modelSettings;
+window.utils = utils;
+window.tabs = tabs;
 
 async function init() {
   // 基础 UI
