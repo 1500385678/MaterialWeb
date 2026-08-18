@@ -12,8 +12,12 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.resolve()  # MaterialWeb-v1.0 根
-PORT = 8093
-HOST = '127.0.0.1'
+
+# 端口/host 单一事实源(§6.2)· 改 → server/config.py 改一处,daemon 自动跟随
+sys.path.insert(0, str(ROOT))
+from server.config import PORT  # noqa: E402
+
+HOST = '127.0.0.1'  # 本机环回,健康检查 localhost 即可,不绑 0.0.0.0
 
 
 def kill_old():
@@ -58,7 +62,12 @@ def wait_ready(timeout=15):
 
 
 def start_detached():
-    """detached 后台启动"""
+    """detached 后台启动
+    强制 MW_DEBUG=0:关 werkzeug watchdog reloader(避免文件变更触发整进程重启 + server.out 噪音)
+    生产模式不需要 reloader,daemon 长驻只跑一遍启动代码
+    """
+    # 强制关 DEBUG(reloader 也跟着关)· 子进程继承 env
+    os.environ['MW_DEBUG'] = '0'
     if sys.platform == 'win32':
         DETACHED_PROCESS = 0x00000008
         CREATE_NEW_PROCESS_GROUP = 0x00000200

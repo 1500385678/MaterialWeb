@@ -1,6 +1,6 @@
-/* materials.css · 材料页 · Apple 风(暗色 + 磨砂玻璃 + 大字 + 留白)
-参考 apple.com 风格:大圆角 / 极简留白 / 玻璃质感 / 大字层级 / 细边框
-暗色基底保留 MaterialWeb 主题 (#1a1a1a + #ff9e4a)
+/* materials.css · 材料页 · Tesla 风(暗色 + 极简 + 12px 圆角 + 蓝主色)
+参考 Tesla Design System:无阴影渐变 / 12px 卡片圆角 / 单蓝主色 / 14px 字体
+暗色基底保留(建筑师看图友好),Apple 玻璃全去
 */
 
 /* ============ Layout ============ */
@@ -13,7 +13,7 @@
   padding: 32px 24px 64px;
 }
 
-/* ============ Sidebar (玻璃) ============ */
+/* ============ Sidebar (平面 + 细边) ============ */
 .mat-sidebar {
   position: sticky;
   top: 76px;
@@ -29,19 +29,17 @@
 .mat-sidebar-search input {
   width: 100%;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  background: var(--card);
+  border: 0.5px solid var(--border-soft);
+  border-radius: 8px;
   color: var(--text);
   font-size: 13px;
   font-family: var(--font-display);
   outline: none;
-  transition: all .25s var(--ease);
+  transition: border-color var(--t), background-color var(--t);
 }
 .mat-sidebar-search input::placeholder { color: var(--text-muted); }
-.mat-sidebar-search input:focus { background: rgba(255,255,255,0.10); border-color: rgba(255, 158, 74, 0.4); }
+.mat-sidebar-search input:focus { background: #2a2a2a; border-color: var(--primary); }
 
 .mat-sidebar-section { margin-bottom: 22px; }
 .mat-sidebar-title {
@@ -81,7 +79,7 @@
 }
 .mat-sidebar-item:hover { background: rgba(255, 255, 255, 0.05); }
 .mat-sidebar-item.active {
-  background: rgba(255, 158, 74, 0.12);
+  background: var(--primary-soft);
   color: var(--primary);
   border-left-color: var(--primary);
   font-weight: 500;
@@ -125,85 +123,56 @@
 }
 .mat-sidebar-reset:hover { border-color: var(--primary); color: var(--primary); }
 
-/* ============ Hero (Apple 超大字) ============ */
+/* ============ Hero (Tesla 平面 + 蓝主色 + 12px 圆角) ============ */
 .mat-hero {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-xl);
   margin-bottom: 32px;
-  padding: 64px 56px 56px;
-  min-height: 280px;
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 200, 130, 0.18) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(180, 130, 255, 0.12) 0%, transparent 50%),
-    linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  padding: 56px 48px 48px;
+  min-height: 240px;
+  background: var(--card);
+  border: 0.5px solid var(--border-soft);
   color: var(--text);
   display: flex;
   align-items: center;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
 }
-.mat-hero-content { z-index: 2; max-width: 70%; }
+.mat-hero-content { max-width: 70%; }
 .mat-hero-eyebrow {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--primary);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   opacity: 0.9;
 }
 .mat-hero h1 {
-  font-size: 64px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  letter-spacing: -0.04em;
-  line-height: 1.05;
-  background: linear-gradient(180deg, #ffffff 0%, #c0c0c0 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 40px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text);
 }
 .mat-hero h2 {
-  font-size: 21px;
+  font-size: 17px;
   font-weight: 400;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   letter-spacing: -0.01em;
   line-height: 1.3;
   color: var(--text);
-  opacity: 0.85;
+  opacity: 0.8;
 }
 .mat-hero p {
-  font-size: 15px;
-  opacity: 0.55;
+  font-size: 14px;
+  opacity: 0.6;
   line-height: 1.5;
   max-width: 520px;
 }
-.mat-hero-shape {
-  position: absolute;
-  right: -60px;
-  bottom: -60px;
-  width: 280px;
-  height: 280px;
-  background: linear-gradient(135deg, rgba(255, 158, 74, 0.3) 0%, rgba(180, 130, 255, 0.25) 100%);
-  transform: rotate(45deg);
-  border-radius: 32px;
-  z-index: 1;
-  opacity: 0.6;
-  filter: blur(40px);
-}
-.mat-hero-shape::after {
-  content: '';
-  position: absolute;
-  top: 50px;
-  left: 50px;
-  width: 140px;
-  height: 140px;
-  background: linear-gradient(135deg, rgba(255, 200, 130, 0.5), transparent);
-  border-radius: 16px;
-  filter: blur(20px);
-}
+.mat-hero-shape { display: none; }  /* 去装饰图形 */
 
-/* ============ Entry Cards (玻璃) ============ */
+/* ============ Entry Cards (Tesla 平面) ============ */
 .mat-entries {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -215,78 +184,62 @@
   overflow: hidden;
   padding: 22px 24px;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  background: var(--card);
+  border: 0.5px solid var(--border-soft);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: all .35s var(--ease-out);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: border-color var(--t), background-color var(--t);
 }
 .mat-entry:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  background: #262626;
+  border-color: rgba(62, 106, 225, 0.3);
 }
-.mat-entry::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--entry-color, var(--primary));
-  opacity: 0;
-  transition: opacity .35s var(--ease);
-  pointer-events: none;
-}
-.mat-entry:hover::before { opacity: 0.06; }
+.mat-entry::before { display: none; }  /* 去 hover 渐变叠加 */
 .mat-entry-icon {
-  font-size: 28px;
-  width: 52px;
-  height: 52px;
-  background: var(--entry-bg, rgba(255, 158, 74, 0.12));
-  border-radius: 14px;
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  background: var(--entry-bg, var(--primary-soft));
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  z-index: 1;
+  color: var(--entry-color, var(--primary));
 }
-.mat-entry-info { z-index: 1; min-width: 0; }
-.mat-entry-info h3 { font-size: 17px; font-weight: 600; margin-bottom: 2px; letter-spacing: -0.01em; }
+.mat-entry-info { min-width: 0; }
+.mat-entry-info h3 { font-size: 15px; font-weight: 500; margin-bottom: 2px; letter-spacing: -0.01em; }
 .mat-entry-info p { font-size: 12.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mat-entry[data-key="fire"]  { --entry-color: #ef4444; --entry-bg: rgba(239, 68, 68, 0.14); }
-.mat-entry[data-key="high"]  { --entry-color: #f59e0b; --entry-bg: rgba(245, 158, 11, 0.14); }
+.mat-entry[data-key="high"]  { --entry-color: var(--primary); --entry-bg: var(--primary-soft); }
 .mat-entry[data-key="new"]   { --entry-color: #10b981; --entry-bg: rgba(16, 185, 129, 0.14); }
 
-/* ============ Grid (大圆角卡片) ============ */
+/* ============ Grid (Tesla 12px 圆角卡片) ============ */
 .mat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  gap: 16px;
 }
 .mat-card {
   background: var(--card);
-  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  border: 0.5px solid var(--border-soft);
   border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
-  transition: all .35s var(--ease-out);
+  transition: border-color var(--t), background-color var(--t);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 .mat-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 158, 74, 0.3);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 158, 74, 0.2);
+  border-color: rgba(62, 106, 225, 0.4);
+  background: #262626;
 }
 .mat-card-img {
   width: 100%;
   aspect-ratio: 4 / 3;
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  background: #1a1a1a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -294,7 +247,7 @@
   overflow: hidden;
 }
 .mat-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease-out); }
-.mat-card:hover .mat-card-img img { transform: scale(1.06); }
+.mat-card:hover .mat-card-img img { transform: scale(1.04); }
 .mat-card-img .ph {
   font-size: 40px;
   opacity: 0.5;
@@ -306,13 +259,11 @@
   bottom: 10px;
   font-size: 10px;
   padding: 3px 8px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.7);
   color: #fff;
-  border-radius: 6px;
+  border-radius: 4px;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.06em;
 }
 .mat-card-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
@@ -340,11 +291,11 @@
 }
 .lang-tag {
   font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  background: rgba(255, 158, 74, 0.1);
+  padding: 5px 12px;
+  border-radius: 4px;
+  background: var(--primary-soft);
   color: var(--primary);
-  border: 0.5px solid rgba(255, 158, 74, 0.25);
+  border: 0.5px solid rgba(62, 106, 225, 0.25);
   font-weight: 500;
   letter-spacing: 0.02em;
 }
@@ -399,9 +350,9 @@
 
 /* ============ 详情 Modal · 价格 tab ============ */
 .price-headline {
-  background: linear-gradient(135deg, rgba(255,158,74,0.08), rgba(255,158,74,0.02));
-  border: 0.5px solid rgba(255,158,74,0.25);
-  border-radius: 14px;
+  background: var(--primary-soft);
+  border: 0.5px solid rgba(62, 106, 225, 0.25);
+  border-radius: 8px;
   padding: 22px 26px;
   margin-bottom: 18px;
   text-align: center;
@@ -415,8 +366,8 @@
 }
 .price-value {
   font-family: var(--font-display);
-  font-size: 36px;
-  font-weight: 700;
+  font-size: 40px;
+  font-weight: 500;
   color: var(--primary);
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -466,7 +417,7 @@
   color: var(--text-muted);
   border-radius: 8px;
 }
-.price-type-tag { background: rgba(255,158,74,0.12); color: var(--primary); }
+.price-type-tag { background: var(--primary-soft); color: var(--primary); }
 .price-tier-num {
   font-family: var(--font-display);
   font-size: 14px;
@@ -487,11 +438,9 @@
   top: 8px;
   font-size: 10px;
   padding: 3px 8px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #1a1a1a;
-  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border-radius: 4px;
   font-weight: 500;
   letter-spacing: 0.01em;
   max-width: 70%;

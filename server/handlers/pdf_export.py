@@ -1,8 +1,17 @@
-"""PDF 导出 · /api/schemes/<id>/export/pdf
+"""PDF 导出 · /api/schemes/<id>/export/pdf(同步,保留兼容)
 reportlab + 中文字体(自动探测 msyh.ttc / simhei / Noto Sans CJK)
+
+异步流程见 server/handlers/pdf_tasks.py:
+    POST  /api/schemes/<id>/export/pdf  →  {task_id, status:"pending"}
+    GET   /api/schemes/<id>/export/pdf/status/<task_id>
+    GET   /api/schemes/<id>/export/pdf/download/<task_id>
+
+P0 修 2026-08-09 夜间迭代批 3: 抽出 build_pdf() 供线程池复用,旧 GET 仍
+可走但会同步阻塞(单用户/小方案场景下无影响,前端默认走异步)。
 """
 import io
 import json
+import logging
 import os
 import re
 from flask import Blueprint, send_file
@@ -15,6 +24,8 @@ from reportlab.platypus import (
 )
 from ..core import get_db
 from .. import config
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('pdf_export', __name__)
 
@@ -63,14 +74,13 @@ def _styles():
     }
 
 
-@bp.get('/api/schemes/<int:sid>/export/pdf')
-def export_pdf(sid: int):
+def _scheme_data(sid: int):
+    """DB 拉取方案 + 材质 + 场景分析(供 build_pdf 用)"""
     db = get_db()
     s = db.execute('SELECT * FROM material_schemes WHERE id = ?', (sid,)).fetchone()
     if not s:
-        return {'error': '方案不存在'}, 404
+        return None
     sch = dict(s)
-
     mats = db.execute('''
         SELECT sm.id AS sm_id, sm.score, sm.score_reason, sm.is_selected,
                m.id, m.code, m.name_cn, m.name_en, m.visual_desc, m.unit_price, m.unit,
@@ -81,17 +91,31 @@ def export_pdf(sid: int):
         WHERE sm.scheme_id = ?
         ORDER BY sm.score DESC
     ''', (sid,)).fetchall()
-
     ctx = {}
     if sch.get('analysis_json'):
         try: ctx = json.loads(sch['analysis_json'])
-        except: pass
-    analysis = ctx.get('analysis') or {}
+        except (OSError, IOError, ValueError) as exc:
+            logger.warning('pdf_export.build_pdf: parse analysis_json failed for sid=%s: %r', sid, exc)
+    return {'scheme': sch, 'mats': mats, 'analysis': ctx.get('analysis') or {}}
+
+
+def build_pdf(sid: int, task_id: str = None) -> str:
+    """构建方案 PDF,写到 data/exports/<task_id or sync_sid>.pdf
+    返绝对路径。供 workers/pdf_pool.py 在线程池里跑。
+    """
+    from ..workers.pdf_pool import _export_dir
+    data = _scheme_data(sid)
+    if not data:
+        raise ValueError(f'方案 #{sid} 不存在')
+    sch, mats, analysis = data['scheme'], data['mats'], data['analysis']
+
+    out_dir = _export_dir()
+    fname = f'{task_id or f"sync_{sid}"}.pdf'
+    out_path = out_dir / fname
 
     s_ = _styles()
-    buf = io.BytesIO()
     doc = SimpleDocTemplate(
-        buf, pagesize=A4,
+        str(out_path), pagesize=A4,
         topMargin=1.8*cm, bottomMargin=1.8*cm,
         leftMargin=2*cm, rightMargin=2*cm,
         title=sch['name'], author='MaterialWeb AI 选材',
@@ -138,7 +162,7 @@ def export_pdf(sid: int):
 
     # 材质清单
     story.append(Paragraph(f'材质清单({len(mats)} 项)', s_['h2']))
-    data = [[
+    data_rows = [[
         Paragraph('<b>#</b>',       s_['cellB']),
         Paragraph('<b>名称</b>',     s_['cellB']),
         Paragraph('<b>类别</b>',     s_['cellB']),
@@ -152,7 +176,7 @@ def export_pdf(sid: int):
         m = dict(m)
         name_html = f"{m.get('name_cn','')}<br/><font size=7 color=grey>{m.get('name_en','')}</font>"
         desc_html = (m.get('visual_desc') or '—').replace('\n', '<br/>')
-        data.append([
+        data_rows.append([
             Paragraph(str(i), s_['center']),
             Paragraph(name_html, s_['cell']),
             Paragraph(m.get('category_name') or '—', s_['cell']),
@@ -162,7 +186,7 @@ def export_pdf(sid: int):
             Paragraph(str(m.get('score', 0)), s_['center']),
             Paragraph(desc_html, s_['cell']),
         ])
-    table = Table(data, colWidths=[0.8*cm, 3.5*cm, 1.8*cm, 1*cm, 1*cm, 1.8*cm, 1*cm, 6*cm], repeatRows=1)
+    table = Table(data_rows, colWidths=[0.8*cm, 3.5*cm, 1.8*cm, 1*cm, 1*cm, 1.8*cm, 1*cm, 6*cm], repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND',  (0,0), (-1,0), rl_colors.HexColor('#ff9e4a')),
         ('TEXTCOLOR',   (0,0), (-1,0), rl_colors.white),
@@ -189,11 +213,23 @@ def export_pdf(sid: int):
     story.append(Paragraph('— 本方案由 MaterialWeb AI 选材生成 —', s_['footer']))
 
     doc.build(story)
-    buf.seek(0)
+    return str(out_path)
 
-    safe_name = re.sub(r'[\\/:*?"<>|]', '_', sch['name'])
+
+@bp.get('/api/schemes/<int:sid>/export/pdf')
+def export_pdf(sid: int):
+    """同步导出(保留兼容)。前端默认走 POST 异步流,见 pdf_tasks.py。
+    ⚠️ 大方案会同步阻塞 Flask 主进程 30-60s,生产建议改用异步端点。
+    """
+    from ..workers.pdf_pool import _export_dir
+    data = _scheme_data(sid)
+    if not data:
+        return {'error': '方案不存在'}, 404
+    # 走 build_pdf 落盘 → send_file,避免重复实现
+    path = build_pdf(sid, task_id=None)
+    safe_name = re.sub(r'[\\/:*?"<>|]', '_', data['scheme']['name'])
     return send_file(
-        buf, mimetype='application/pdf',
+        path, mimetype='application/pdf',
         as_attachment=True, download_name=f"{safe_name}_{sid}.pdf",
     )
 

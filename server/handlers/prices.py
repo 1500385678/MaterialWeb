@@ -26,7 +26,11 @@ def _load_keywords() -> dict:
 
 
 def _get_prices_db():
-    """每次新建连接 — 价格库是只读,放 g.db 反而污染主请求连接池"""
+    """每次新建连接 — 价格库是只读,放 g.db 反而污染主请求连接池
+
+    Mac 暂未启用价格库:data/prices.db 不存在时,sqlite3 会自动建一个空文件,
+    所有查询返空集(latest=None, tiers=[]),不影响主流程。
+    """
     conn = sqlite3.connect(str(config.PRICES_DB_PATH))
     conn.row_factory = sqlite3.Row
     return conn

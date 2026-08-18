@@ -2,9 +2,12 @@
 /api/media/images/<file> · /api/media/cad/<file> · /uploads/<file>
 """
 import json
+import logging
 from flask import Blueprint, send_from_directory, jsonify
 from ..core import get_db
 from .. import config
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('media', __name__)
 
@@ -39,7 +42,9 @@ def list_media(material_id: int):
     def _parse(v):
         if not v: return []
         try: return json.loads(v)
-        except: return []
+        except (OSError, IOError, ValueError) as exc:
+            logger.warning('media._parse: parse value failed: %r', exc)
+            return []
     return jsonify({
         'images':    _parse(row['image_urls']),
         'cad_files': _parse(row['cad_files']),

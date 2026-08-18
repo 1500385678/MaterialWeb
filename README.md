@@ -1,6 +1,6 @@
 # MaterialWeb v1.0 · 小白入门 README
 
-> **这份用大白话写**,技术细节看 [[MAIN]]、[[docs/README]]、[[docs/AGENTS]]、[[docs/FILE_GUIDE]]、[[docs/api_contract]]。
+> **这份用大白话写**,技术细节看 、、、、。
 > 参考 CanvasWeb-v2.5 框架:主程序 vs 支程序 + 单文件 ≤250 行。
 
 ---
@@ -31,14 +31,32 @@
 
 ---
 
-## 1. 怎么启动(3 步)
+## 1. 怎么启动(3 步 · Mac / Windows 双平台)
+
+### 🍎 Mac (本机默认)
+
+```bash
+# 第 1 步:打开 Terminal,切到这个文件夹(改成本机实际路径)
+cd <本仓库根目录>/MaterialWeb/
+
+# 第 2 步:启动后台服务(关掉窗口也不会停)
+python3 scripts/daemon.py
+
+# 第 3 步:打开浏览器
+#    http://127.0.0.1:8086/
+```
+
+> **Mac 用 `source` 替 `powershell`**(没有 venv 就 `python3` 直接跑,跟下面 Linux 通用)。
+
+### 🪟 Windows (PowerShell)
 
 ```powershell
 # 第 1 步:打开 PowerShell,切到这个文件夹
-cd D:\Mac\Mac\workteam\05_space\03_architect\_ArchitectLib\MaterialWeb-v1.0
+#    Windows 路径仅作历史参考 — 实际开发在 Mac mini 上
+#    如需在 Windows 跑,先 git clone 同步本仓,再按本机实际路径改 cd
 
-# 第 2 步:启动后台服务(关掉窗口也不会停)
-python scripts/daemon.py
+# 第 2 步:启动后台服务
+python scripts\daemon.py
 
 # 第 3 步:打开浏览器
 #    http://127.0.0.1:8086/
@@ -48,11 +66,11 @@ python scripts/daemon.py
 最后一行:`[daemon] OK · http://127.0.0.1:8086/`
 
 **怎么知道有没有坏?**
-`python tests/smoke.py` → `✅ 8/8 endpoints OK` 就对了。
+`python3 tests/smoke.py` → `✅ 8/8 endpoints OK` 就对了。
 
 **想看实时日志?** 前台模式:
-```powershell
-python -X utf8 -u -m server
+```bash
+python3 -X utf8 -u -m server
 ```
 
 ---
@@ -185,14 +203,14 @@ python -X utf8 -u -m server
 
 | 你想... | 看哪 |
 |---|---|
-| 第一次接触项目 | 这份 [[README]] |
-| 知道怎么启动 | [[docs/README]] 上手 3 步 |
-| 知道每个文件干啥 | [[docs/FILE_GUIDE]] 3-5 行/文件 |
-| 1 行速查每个文件 | [[docs/CHEATSHEET]] |
-| AI 改这个项目 | [[docs/AGENTS]] |
-| 看 API 长啥样 | [[docs/api_contract]] |
-| 代码怎么写(命名/风格/禁词) | [[docs/STYLE]] |
-| 主程序 vs 支程序边界 | [[MAIN]] |
+| 第一次接触项目 | 这份  |
+| 知道怎么启动 |  上手 3 步 |
+| 知道每个文件干啥 |  3-5 行/文件 |
+| 1 行速查每个文件 |  |
+| AI 改这个项目 |  |
+| 看 API 长啥样 |  |
+| 代码怎么写(命名/风格/禁词) |  |
+| 主程序 vs 支程序边界 |  |
 | 出问题了 | 翻 `server.err` 和 `daemon.err` |
 
 ---
@@ -204,7 +222,7 @@ python -X utf8 -u -m server
 - **API 路径只加不减**(减了会让旧前端失效)
 - **API 响应字段只加不删,可以重命名**
 - **HTML/CSS/JS 不缓存**(改了立刻生效)
-- **写权限限本机 IP**
+- **写权限限本机 IP**(dev 默认 127.0.0.1,生产严禁 0.0.0.0;需 LAN 临时开 `MW_HOST=0.0.0.0 MW_ALLOWED_LAN_IPS=<ip1,ip2>`)
 - **同时最多 20 人用**(超出返 503)
 
 ### 6.1 ⚠️ v1.0 偏离 v2.5 铁律
@@ -227,7 +245,7 @@ python -X utf8 -u -m server
 
 ## 关联文档
 
-- [[MAIN]] · 主程序 vs 支程序边界
-- [[CONTROL]] · 5 分钟接手文档
-- [[docs/AGENTS]] · AI 协作者硬约束
-- [[docs/api_contract]] · API 契约
+-  · 主程序 vs 支程序边界
+-  · 5 分钟接手文档
+-  · AI 协作者硬约束
+-  · API 契约

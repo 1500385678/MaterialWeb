@@ -88,4 +88,8 @@ export const ai = {
   delScheme:    (id) => req('/schemes/' + id, { method: 'DELETE' }),
   reloadScheme: (id) => req('/schemes/' + id + '/reload'),
   exportPdfUrl: (id) => BASE + '/schemes/' + id + '/export/pdf',
+  // 异步导出(P0 修 2026-08-09 夜间迭代批 3):doc.build 不再阻塞 Flask 主线程
+  submitExportPdf: (id) => req('/schemes/' + id + '/export/pdf', { method: 'POST' }),
+  pollExportStatus: (id, taskId) => req('/schemes/' + id + '/export/pdf/status/' + taskId),
+  downloadExportPdfUrl: (id, taskId) => BASE + '/schemes/' + id + '/export/pdf/download/' + taskId,
 };

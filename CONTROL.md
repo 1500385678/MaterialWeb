@@ -15,9 +15,11 @@
 | 后端 | Flask + SQLite,**2 个 pip 依赖**(flask + qrcode + reportlab) |
 | 前端 | 原生 ES Modules,**零 npm 依赖** |
 | 数据 | SQLite + 文件系统(uploads / qr_codes / media) |
-| 启动 | `python scripts/daemon.py`(后台) · `python -m server`(前台) |
-| 验证 | `python tests/smoke.py` → `✅ 8/8 endpoints OK` |
+| 启动(Mac) | `python3 scripts/daemon.py`(后台) · `python3 -m server`(前台) |
+| 启动(Win) | `python scripts\daemon.py`(后台) · `python -m server`(前台) |
+| 验证 | `python3 tests/smoke.py` → `✅ 8/8 endpoints OK` |
 | 体量 | **~3700 行** (Py 1850 + JS 1600 + HTML/CSS 450) |
+| 工作目录 | `<本仓库根目录>/MaterialWeb/`(本机: `$(pwd)` · 历史 Mac 路径 `/Users/aaron/Mac/...` 已废弃) |
 
 ---
 
@@ -111,7 +113,7 @@
 
 | 优先级 | 文件 | 行数 | 为什么 |
 |---|---|---|---|
-| 🔴 1 | [[MAIN]] | ~150 | 主程序/支程序边界,改之前三思 |
+| 🔴 1 |  | ~150 | 主程序/支程序边界,改之前三思 |
 | 🔴 2 | `docs/AGENTS.md` | ~150 | AI 协作者硬约束清单 |
 | 🔴 3 | `docs/api_contract.md` | ~200 | 所有 API 端点契约 |
 | 🟡 4 | `client/js/core/state.js` | ~50 | 全局状态结构(其他都 import 它) |
@@ -127,8 +129,8 @@
 | 2 | **端口 8086** | 改 → 同步 config.py + daemon.py + 文档 |
 | 3 | **API 路径只加不删** | 删字段会让 v0(5188)前端失效 |
 | 4 | **API 响应字段只加不删** | 同上 |
-| 5 | **HTML/CSS/JS 全部 no-store** | 否则 AI 改完不生效 |
-| 6 | **写权限限本机 IP** | 其他 403 |
+| 5 | **HTML/CSS/JS 全部 no-store**(白名单: text/html, text/css, application/javascript, text/javascript · 精确 MIME,小写,不含 charset) | 否则 AI 改完不生效 |
+| 6 | **写权限限本机 IP** | dev 默认 127.0.0.1 + 写前 IP 白名单中间件;LAN 例外靠 `MW_HOST=0.0.0.0 MW_ALLOWED_LAN_IPS=<...>` 临时开 |
 | 7 | **并发上限 20** | 超出 503 |
 | 8 | **用 bus 跨模块,别直接 import 内部变量** | 循环依赖 |
 
@@ -143,11 +145,15 @@
 - 8/8 端点 smoke test 通过
 - 主流程:看材料 → 创建项目 → AI 选材 → 保存方案 → 导出 PDF
 - 数据已迁移:materials.db 160KB + 11 张 AI 图 + 4 个 QR
+- 已关闭 werkzeug watchdog reloader(2026-08-10 夜间迭代修):daemon 启动强制 `MW_DEBUG=0`,server.out 不再每改文件整进程重启,启动 banner 打印 `MW_DEBUG=0, reloader=off` 便于排错
+- search_by_analysis 加 SQL 预过滤(2026-08-11 夜间迭代批 2 改 · P1):_PRE_FILTER_LIMIT=500 + 抽 _score_row + 8 字段精排;1000 行 fixture P95 < 200ms 契约(tests/search_bench.py)
+- Cache-Control 改白名单精确匹配(2026-08-11 夜间迭代批 2 改 · P2):substring('javascript') → set 查 {text/html, text/css, application/javascript, text/javascript},加 Vary: Accept-Encoding 防 gzip 缓存串(tests/test_cache_headers.py 覆盖 .html/.css/.js/.png/JSON 五场景)
 
 ### ⚠️ 已知问题
 - Flask 保留(偏离 v2.5 § 6.2 铁律,因 PDF/二维码需要)
 - docx 导出暂用 JSON placeholder(v1.0 后续接 docx 库)
 - 旧 `MaterialDb/` 目录还在原位(WPS 锁,未删除),可手动清
+- LAN 暴露(2026-08-08 已修 P0①):daemon 历史绑 0.0.0.0 + CORS=*,违反铁律 #6;已改默认 127.0.0.1 + 写前 IP 白名单中间件,LAN 临时开放需 `MW_HOST=0.0.0.0 MW_ALLOWED_LAN_IPS=<ip>` 显式声明
 
 ### ❌ 工程化债(详见 .Log)
 | 优先级 | 项 | 估时 |
@@ -158,13 +164,18 @@
 | ⚪ P2-④ | 7 份 docs 完整版 | 2h |
 | ⚪ P2-⑤ | 移动数据目录到 %LOCALAPPDATA% | 0.5d |
 
+### 📁 副本约定(2026-08-15 夜间迭代批 2 加)
+- 任何 `*-副本YYYYMMDDhhmmss.{py,js,html,css,sql,db}` 时间戳副本文件,统一迁 `_archive/YYYY-MM-DD-副本/`
+- 当前批归档:`_archive/2026-08-15-副本/`(18 个文件,涉及 server/scripts/db/client 4 目录 7 模板)
+- 不允许在主目录保留带"副本"后缀的散落文件(改错文件 + 导入缓存污染)
+
 ---
 
 ## 7. 接手 5 步(给下一个 Agent)
 
 ```
-1. 读 [[CONTROL]]                    ← 本文件,5 分钟
-2. 读 [[MAIN]]                        ← 主程序/支程序边界,3 分钟
+1. 读                     ← 本文件,5 分钟
+2. 读                         ← 主程序/支程序边界,3 分钟
 3. 读 docs/AGENTS.md                  ← 硬约束 + 加新功能流程,10 分钟
 4. python scripts/daemon.py           ← 启动,1 分钟
 5. python tests/smoke.py              ← 验证 8 端点,1 分钟
@@ -172,15 +183,15 @@
                                        合计 20 分钟
 ```
 
-之后挑一个 P1 干。干完一个在 [[.Log/]] 加一条日志。
+之后挑一个 P1 干。干完一个在  加一条日志。
 
 ---
 
 ## 8. 关键链接
 
 ### 必读(上手)
-- [[README]] · 小白入门版
-- [[MAIN]] · 主程序/支程序边界
+-  · 小白入门版
+-  · 主程序/支程序边界
 - `docs/AGENTS.md` · AI 协作者硬约束
 - `docs/api_contract.md` · API 契约(所有端点)
 - `docs/FILE_GUIDE.md` · 3-5 行/文件详释
@@ -205,9 +216,11 @@
 | 端点 500 | `server.out` / `server.err`(本目录) |
 | 前端不刷新 | 浏览器硬刷 Ctrl+Shift+R(已 no-store) |
 | 数据丢失 | 检查 `data/uploads/` `data/qr_codes/` 还在不在 |
-| 端口冲突 | `netstat -ano -p TCP \| findstr :8086` 杀 PID |
+| 端口冲突 (Mac) | `lsof -ti:8086 \| xargs kill -9`(杀 8086 进程) |
+| 端口冲突 (Win) | `netstat -ano -p TCP \| findstr :8086` 杀 PID |
 
 ---
 
 > 变更记录
 > - 2026-07-13 · 初版 · 由 03_Architect 创建,给下一个 agent 接手用
+> - 2026-08-16 · 夜间迭代批 2 二次重审 · 5 项 P1+P2 仍闭环 · 0 改动 · HEAD `38587eb` (端口/README/PRICES_DB/WAL/7monolith/list_materials 全闭环)

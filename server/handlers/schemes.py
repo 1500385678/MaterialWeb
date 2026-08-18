@@ -6,9 +6,12 @@
 - GET  /api/schemes/<id>/reload  会话状态(分析 + 搜索 + 选中)
 """
 import json
+import logging
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 from ..core import get_db
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('schemes', __name__)
 
@@ -80,7 +83,9 @@ def list_all():
 def _parse_ctx(raw):
     if not raw: return {}
     try: return json.loads(raw)
-    except: return {}
+    except (OSError, IOError, ValueError) as exc:
+        logger.warning('schemes._parse_ctx: parse raw failed: %r', exc)
+        return {}
 
 
 @bp.get('/api/schemes/<int:sid>')
