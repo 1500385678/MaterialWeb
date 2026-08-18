@@ -5,19 +5,23 @@
 :root {
   --bg: #1a1a1a;
   --card: #222;
-  --primary: #ff9e4a;
-  --primary-dark: #ffb370;
+  --primary: #3E6AE1;            /* Tesla Electric Blue(原橙红 #ff9e4a)*/
+  --primary-dark: #5a82ed;
+  --primary-soft: rgba(62, 106, 225, 0.12);
   --text: #eaeaea;
   --text-muted: #888;
   --border: #3a3a3a;
+  --border-soft: rgba(255, 255, 255, 0.08);
   --success: #22c55e;
   --danger: #ff6b6b;
-  --radius: 10px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-  --shadow: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+  --radius: 4px;                /* Tesla: 按钮 4px(原 10px)*/
+  --radius-lg: 8px;             /* 卡片 8px(原 18px)*/
+  --radius-xl: 12px;            /* 大圆角 12px(原 24px)*/
+  --shadow: 0 1px 2px rgba(0,0,0,.3);  /* 减弱阴影(原双层)*/
+  --shadow-hover: 0 2px 6px rgba(62, 106, 225, .15);  /* hover 微蓝光(原橙光)*/
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --t: 0.33s;                   /* Tesla: 0.33s 通用过渡 */
   --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
                   'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
 }
@@ -25,12 +29,10 @@
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 body { font-family: var(--font-display); background: var(--bg); color: var(--text); letter-spacing: -0.01em; }
 
-/* ============ 顶部导航 (Apple 磨砂玻璃) ============ */
+/* ============ 顶部导航 (去 Apple 玻璃 · 平面 + 细边) ============ */
 .navbar {
-  background: rgba(26, 26, 26, 0.72);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg);
+  border-bottom: 0.5px solid var(--border-soft);
   padding: 0 24px; height: 52px;
   display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
 .navbar-brand { font-size: 18px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
@@ -58,13 +60,13 @@ body { font-family: var(--font-display); background: var(--bg); color: var(--tex
 select.filter { padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius);
   font-size: 14px; outline: none; background: #2a2a2a; color: var(--text); cursor: pointer; }
 
-/* ============ 按钮 ============ */
-.btn { padding: 10px 20px; border-radius: var(--radius); border: none; font-size: 14px; cursor: pointer; transition: .15s; font-weight: 500; }
+/* ============ 按钮 (Tesla 风 · 4px 圆角 · 0.33s 过渡) ============ */
+.btn { padding: 10px 20px; border-radius: var(--radius); border: none; font-size: 14px; cursor: pointer; transition: border-color var(--t), background-color var(--t), color var(--t); font-weight: 500; min-height: 40px; }
 .btn-primary { background: var(--primary); color: #fff; }
 .btn-primary:hover { background: var(--primary-dark); }
 .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
 .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-.btn-sm { padding: 6px 14px; font-size: 13px; }
+.btn-sm { padding: 6px 14px; font-size: 13px; min-height: 32px; }
 .btn-success { background: var(--success); color: #1a1a1a; }
 .btn-danger { background: var(--danger); color: #fff; }
 
@@ -73,7 +75,7 @@ select.filter { padding: 10px 14px; border: 1px solid var(--border); border-radi
 .material-card { position: relative; overflow: hidden; isolation: isolate; background: var(--card);
   border-radius: var(--radius); border: 1px solid var(--border); padding: 18px;
   box-shadow: var(--shadow); cursor: pointer; transition: .2s; }
-.material-card:hover { box-shadow: 0 4px 12px rgba(255,158,74,.25); border-color: var(--primary); }
+.material-card:hover { box-shadow: var(--shadow-hover); border-color: var(--primary); }
 .card-bg { position: absolute; inset: 0; z-index: -2; background-size: cover; background-position: center;
   opacity: 0; transition: opacity .3s, transform .5s; }
 .material-card.has-img .card-bg { opacity: 0.32; filter: saturate(0.85); }
@@ -100,7 +102,7 @@ select.filter { padding: 10px 14px; border: 1px solid var(--border); border-radi
 
 /* ============ 弹窗 ============ */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 200;
-  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  display: flex; align-items: center; justify-content: center; }
 .modal-overlay:not(.open) { display: none; }
 .modal { background: var(--card); border-radius: var(--radius); width: 92%; max-width: 800px;
   max-height: 88vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
@@ -231,7 +233,7 @@ select.filter { padding: 10px 14px; border: 1px solid var(--border); border-radi
 .ai-results-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
 .ai-result { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 16px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
-.ai-result.selected { border-color: var(--primary); background: rgba(255,158,74,0.08); }
+.ai-result.selected { border-color: var(--primary); background: var(--primary-soft); }
 .ai-result-info h4 { font-size: 15px; margin-bottom: 4px; }
 .ai-result-info p { font-size: 13px; color: var(--text-muted); }
 .ai-result-score { font-size: 22px; font-weight: 700; color: var(--primary); }
