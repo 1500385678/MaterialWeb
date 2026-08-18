@@ -1,6 +1,5 @@
-/* materials.css · 材料页 · Tesla 风(暗色 + 极简 + 12px 圆角 + 蓝主色)
-参考 Tesla Design System:无阴影渐变 / 12px 卡片圆角 / 单蓝主色 / 14px 字体
-暗色基底保留(建筑师看图友好),Apple 玻璃全去
+/* materials.css · 材料页 · Apple 风(白底 + 11/18px 圆角 + Action Blue #0066cc)
+参考 Apple Design System:无阴影渐变 / 11-18px 卡片圆角 / 单蓝主色 / 17px SF Pro
 */
 
 /* ============ Layout ============ */
@@ -39,7 +38,7 @@
   transition: border-color var(--t), background-color var(--t);
 }
 .mat-sidebar-search input::placeholder { color: var(--text-muted); }
-.mat-sidebar-search input:focus { background: #2a2a2a; border-color: var(--primary); }
+.mat-sidebar-search input:focus { background: #ffffff; border-color: var(--primary); }
 
 .mat-sidebar-section { margin-bottom: 22px; }
 .mat-sidebar-title {
@@ -77,7 +76,7 @@
   border-left: 2px solid transparent;
   user-select: none;
 }
-.mat-sidebar-item:hover { background: rgba(255, 255, 255, 0.05); }
+.mat-sidebar-item:hover { background: rgba(0, 0, 0, 0.04); }
 .mat-sidebar-item.active {
   background: var(--primary-soft);
   color: var(--primary);
@@ -94,7 +93,7 @@
   border-radius: 10px;
   font-weight: 500;
 }
-.mat-sidebar-item.active .count { background: var(--primary); color: #1a1a1a; }
+.mat-sidebar-item.active .count { background: var(--primary); color: #ffffff; }
 
 .mat-sidebar-children {
   display: none;
@@ -193,7 +192,7 @@
   transition: border-color var(--t), background-color var(--t);
 }
 .mat-entry:hover {
-  background: #262626;
+  background: #ebebed;
   border-color: rgba(62, 106, 225, 0.3);
 }
 .mat-entry::before { display: none; }  /* 去 hover 渐变叠加 */
@@ -234,12 +233,12 @@
 }
 .mat-card:hover {
   border-color: rgba(62, 106, 225, 0.4);
-  background: #262626;
+  background: #ebebed;
 }
 .mat-card-img {
   width: 100%;
   aspect-ratio: 4 / 3;
-  background: #1a1a1a;
+  background: #ececef;            /* Apple 浅灰(跟 canvas 区分)*/
   display: flex;
   align-items: center;
   justify-content: center;
@@ -320,8 +319,8 @@
   transition: all .25s var(--ease);
 }
 .ref-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.10);
 }
 .ref-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
 .ref-name { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
@@ -337,7 +336,7 @@
   padding: 6px 12px;
   margin: 8px 0;
 }
-.ref-img { width: 100%; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden; background: #1a1a1a; margin-top: 8px; }
+.ref-img { width: 100%; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden; background: #f5f5f7; margin-top: 8px; }
 .ref-img img { width: 100%; height: 100%; object-fit: cover; }
 .ref-img-empty {
   display: flex;
